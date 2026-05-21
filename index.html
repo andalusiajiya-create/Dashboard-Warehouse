@@ -1,267 +1,219 @@
-
-<h2 class="sr-only">Daily Report Warehouse — dashboard dengan input form, penyimpanan data, dan visualisasi laporan harian</h2>
-
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Report Warehouse</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-sans); }
-.section { padding: 1.5rem 0 0; }
-.section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 12px; }
-.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
-.metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; }
-.metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
-.metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
-.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; align-items: end; }
-.form-group label { font-size: 12px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
-.form-group input { width: 100%; padding: 6px 8px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); }
-.form-group input:focus { outline: none; box-shadow: 0 0 0 2px rgba(55,138,221,0.2); }
-.btn-primary { background: #185FA5; color: #E6F1FB; border: none; border-radius: var(--border-radius-md); padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer; width: 100%; }
-.btn-primary:hover { background: #0C447C; }
-.table-wrap { overflow-x: auto; margin-top: 12px; }
-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-th { background: var(--color-background-secondary); color: var(--color-text-secondary); font-weight: 500; padding: 8px 10px; text-align: right; border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; }
-th:first-child { text-align: left; }
-td { padding: 7px 10px; text-align: right; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
-td:first-child { text-align: left; font-weight: 500; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--color-background-secondary); }
-.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 100px; }
-.badge-blue { background: #E6F1FB; color: #0C447C; }
-.tabs { display: flex; gap: 4px; margin-bottom: 14px; }
-.tab { font-size: 12px; padding: 5px 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); background: transparent; color: var(--color-text-secondary); cursor: pointer; }
-.tab.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; border-color: var(--color-border-secondary); }
-.empty { color: var(--color-text-tertiary); font-size: 13px; text-align: center; padding: 2rem; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111;font-family:Arial,sans-serif;padding:24px}
+.wrap{background:#1a1a1a;color:#e8e8e8;padding:24px;border-radius:10px;min-height:100vh}
+.section-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px}
+.mc{background:#242424;border:1px solid #333;border-radius:8px;padding:14px 16px}
+.mc-label{font-size:11px;color:#888;margin-bottom:6px}
+.mc-val{font-size:28px;font-weight:700;color:#fff}
+.split{display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start}
+.form-panel{background:#242424;border:1px solid #333;border-radius:8px;padding:16px}
+.fg{margin-bottom:10px}
+.fg label{font-size:11px;color:#888;display:block;margin-bottom:4px;font-weight:600}
+.fg input{width:100%;background:#1e1e1e;border:1px solid #444;border-radius:6px;color:#e8e8e8;padding:6px 9px;font-size:13px}
+.fg input:focus{outline:none;border-color:#666}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.save-btn{width:100%;padding:9px;background:#3a3a3a;color:#fff;border:1px solid #555;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px}
+.save-btn:hover{background:#444}
+.save-btn:active{transform:scale(0.98)}
+.msg{font-size:11px;text-align:center;margin-top:6px;min-height:14px}
+.preview-panel{background:#242424;border:1px solid #333;border-radius:8px;overflow:hidden}
+.tabs{display:flex;gap:0;border-bottom:1px solid #333}
+.tab{padding:9px 18px;font-size:13px;font-weight:600;color:#888;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent}
+.tab.on{color:#fff;border-bottom:2px solid #fff}
+.tbl-wrap{overflow-x:auto;padding:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#2e2e2e;color:#888;font-weight:600;padding:8px;text-align:right;border-bottom:1px solid #333;white-space:nowrap;font-size:11px}
+th:first-child{text-align:left}
+td{padding:9px 8px;text-align:right;border-bottom:1px solid #2a2a2a;color:#e8e8e8;font-size:12px}
+td:first-child{text-align:left;font-weight:600;color:#fff}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#2c2c2c}
+.chart-area{padding:14px}
+.chart-wrap{position:relative;height:260px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-bottom:10px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#aaa}
+.dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.divider{border:none;border-top:1px solid #333;margin:12px 0}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.app-title{font-size:16px;font-weight:700;color:#fff}
+.app-sub{font-size:12px;color:#666;margin-top:2px}
 </style>
+</head>
+<body>
+<div class="wrap">
 
-<div style="padding: 0 0 2rem;">
-
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+  <div class="top-bar">
     <div>
-      <p style="font-size:18px; font-weight:500; color:var(--color-text-primary);">Daily report — warehouse</p>
-      <p style="font-size:13px; color:var(--color-text-secondary);" id="today-label"></p>
+      <div class="app-title">Daily Report — Warehouse</div>
+      <div class="app-sub" id="hdr-date"></div>
     </div>
-    <span class="badge badge-blue" id="total-entries-badge">0 entries</span>
   </div>
 
-  <div class="card section">
-    <p class="section-title"><i class="ti ti-edit" aria-hidden="true"></i> Input form</p>
-    <div class="form-grid" id="form-grid">
-      <div class="form-group">
+  <div class="section-title">Ringkasan hari ini</div>
+  <div class="metrics">
+    <div class="mc"><div class="mc-label">Total produk</div><div class="mc-val" id="m-total">—</div></div>
+    <div class="mc"><div class="mc-label">Kategori</div><div class="mc-val">13</div></div>
+    <div class="mc"><div class="mc-label">Hari tercatat</div><div class="mc-val" id="m-days">0</div></div>
+    <div class="mc"><div class="mc-label">Rata-rata/hari</div><div class="mc-val" id="m-avg">—</div></div>
+  </div>
+
+  <div class="split">
+
+    <div class="form-panel">
+      <div class="section-title">Input form</div>
+      <div class="fg">
         <label>Tanggal</label>
         <input type="date" id="inp-date">
       </div>
-    </div>
-    <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-      <button class="btn-primary" style="width:auto; padding:7px 24px;" onclick="submitForm()">
-        <i class="ti ti-plus" aria-hidden="true"></i> Simpan
-      </button>
-      <span id="form-msg" style="font-size:12px; color:var(--color-text-success);"></span>
-    </div>
-  </div>
-
-  <div class="section">
-    <p class="section-title">Ringkasan hari ini</p>
-    <div class="grid-4" id="summary-cards">
-      <div class="metric-card"><div class="metric-label">Total produk</div><div class="metric-value" id="sum-total">—</div></div>
-      <div class="metric-card"><div class="metric-label">Kategori</div><div class="metric-value">13</div></div>
-      <div class="metric-card"><div class="metric-label">Hari tercatat</div><div class="metric-value" id="sum-days">0</div></div>
-      <div class="metric-card"><div class="metric-label">Rata-rata/hari</div><div class="metric-value" id="sum-avg">—</div></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('table', this)">Tabel data</button>
-      <button class="tab" onclick="switchTab('chart', this)">Grafik</button>
+      <div class="section-title" style="margin-top:8px">Produk</div>
+      <div class="cols2" id="cols-grid"></div>
+      <hr class="divider">
+      <button class="save-btn" onclick="submitForm()">💾 Simpan data</button>
+      <p class="msg" id="form-msg"></p>
     </div>
 
-    <div id="view-table" class="card" style="padding:0.75rem 1.25rem;">
-      <div class="table-wrap">
-        <table id="data-table">
-          <thead></thead>
-          <tbody><tr><td colspan="14" class="empty">Belum ada data. Isi form di atas untuk memulai.</td></tr></tbody>
-        </table>
+    <div class="preview-panel">
+      <div class="tabs">
+        <button class="tab on" onclick="switchTab('tabel',this)">Tabel data</button>
+        <button class="tab" onclick="switchTab('grafik',this)">Grafik</button>
       </div>
-    </div>
 
-    <div id="view-chart" style="display:none;">
-      <div class="grid-2" style="margin-bottom:14px;">
-        <div class="card" style="padding:0.75rem 1.25rem;">
-          <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:8px;">Tren per produk (semua hari)</p>
-          <div style="position:relative; height:220px;">
-            <canvas id="chart-trend" role="img" aria-label="Bar chart tren produk harian">Data tren produk.</canvas>
-          </div>
+      <div id="view-tabel">
+        <div class="tbl-wrap">
+          <table id="data-table"><thead></thead><tbody></tbody></table>
         </div>
-        <div class="card" style="padding:0.75rem 1.25rem;">
-          <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:8px;">Distribusi kategori (total)</p>
-          <div style="position:relative; height:220px;">
-            <canvas id="chart-dist" role="img" aria-label="Pie chart distribusi kategori">Distribusi kategori produk.</canvas>
+      </div>
+
+      <div id="view-grafik" style="display:none">
+        <div class="chart-area">
+          <div class="legend" id="chart-legend"></div>
+          <div class="chart-wrap">
+            <canvas id="chart-main"></canvas>
           </div>
         </div>
       </div>
-      <div class="card" style="padding:0.75rem 1.25rem;">
-        <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:8px;">Total per hari</p>
-        <div style="position:relative; height:180px;">
-          <canvas id="chart-daily" role="img" aria-label="Line chart total per hari">Total unit per hari.</canvas>
-        </div>
-      </div>
     </div>
-  </div>
 
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const COLS = ['Nas8','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention','Standing','TV','Router','Rangka'];
-const COLORS = ['#378ADD','#1D9E75','#D85A30','#D4537E','#888780','#639922','#BA7517','#A32D2D','#534AB7','#185FA5','#0F6E56','#993C1D'];
+const COLS=['Nas8','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention','Standing','TV','Router','Rangka'];
+const PAL=['#4e8fd4','#2ebc8a','#e07050','#d46080','#8a8a8a','#80b840','#d09030','#c04040','#7060c0','#3080c0','#608050','#b05030'];
 
-const SEED = [
-  {date:'2026-05-20', Nas8:50,Nas16:4,Nas50:1,Ldx8:10,Ldx16:20,Ldx30:1,Relink:100,Extention:4,Standing:50,TV:2,Router:2,Rangka:2},
-  {date:'2026-05-21', Nas8:25,Nas16:2,Nas50:3,Ldx8:1,Ldx16:21,Ldx30:2,Relink:98,Extention:40,Standing:45,TV:2,Router:2,Rangka:2},
+const SEED=[
+  {date:'2026-05-20',Nas8:50,Nas16:4,Nas50:1,Ldx8:10,Ldx16:20,Ldx30:1,Relink:100,Extention:4,Standing:50,TV:2,Router:2,Rangka:2},
+  {date:'2026-05-21',Nas8:25,Nas16:2,Nas50:3,Ldx8:1,Ldx16:21,Ldx30:2,Relink:98,Extention:40,Standing:45,TV:2,Router:2,Rangka:2},
 ];
 
-let data = JSON.parse(localStorage.getItem('wh_daily') || 'null') || SEED;
-let chartTrend, chartDist, chartDaily;
+let data=JSON.parse(localStorage.getItem('wh_daily_v1')||'null')||SEED;
+let chartMain;
 
-function save() { try { localStorage.setItem('wh_daily', JSON.stringify(data)); } catch(e){} }
+function save(){try{localStorage.setItem('wh_daily_v1',JSON.stringify(data));}catch(e){}}
 
-function fmt(d) {
-  const [y,m,day] = d.split('-');
-  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  return `${parseInt(day)} ${months[parseInt(m)-1]} ${y}`;
+function fmtDate(d){
+  const[y,m,day]=d.split('-');
+  const mo=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  return`${parseInt(day)} ${mo[parseInt(m)-1]} ${y}`;
 }
 
-document.getElementById('today-label').textContent = fmt(new Date().toISOString().slice(0,10));
+document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
+document.getElementById('hdr-date').textContent=fmtDate(new Date().toISOString().slice(0,10));
 
-function buildForm() {
-  const grid = document.getElementById('form-grid');
-  const dateInp = grid.querySelector('.form-group');
-  const inp = dateInp.querySelector('input');
-  inp.value = new Date().toISOString().slice(0,10);
-  COLS.forEach(col => {
-    const g = document.createElement('div');
-    g.className = 'form-group';
-    g.innerHTML = `<label>${col}</label><input type="number" id="inp-${col}" min="0" value="0">`;
-    grid.appendChild(g);
-  });
+COLS.forEach(col=>{
+  const g=document.createElement('div');
+  g.className='fg';
+  g.innerHTML=`<label>${col}</label><input type="number" id="inp-${col}" min="0" value="0">`;
+  document.getElementById('cols-grid').appendChild(g);
+});
+
+function submitForm(){
+  const date=document.getElementById('inp-date').value;
+  if(!date){showMsg('Pilih tanggal!','#c04040');return;}
+  const row={date};
+  COLS.forEach(c=>{row[c]=parseInt(document.getElementById('inp-'+c).value)||0;});
+  const idx=data.findIndex(r=>r.date===date);
+  if(idx>=0)data[idx]=row;else data.push(row);
+  data.sort((a,b)=>a.date.localeCompare(b.date));
+  save();render();
+  showMsg('✓ Tersimpan!','#2ebc8a');
+  COLS.forEach(c=>{document.getElementById('inp-'+c).value=0;});
 }
 
-function submitForm() {
-  const date = document.getElementById('inp-date').value;
-  if (!date) { showMsg('Pilih tanggal dulu!', 'danger'); return; }
-  const row = { date };
-  let hasValue = false;
-  COLS.forEach(col => {
-    const v = parseInt(document.getElementById('inp-'+col).value) || 0;
-    row[col] = v;
-    if (v > 0) hasValue = true;
-  });
-  const existing = data.findIndex(r => r.date === date);
-  if (existing >= 0) data[existing] = row;
-  else data.push(row);
-  data.sort((a,b) => a.date.localeCompare(b.date));
-  save();
-  render();
-  showMsg('Data tersimpan!');
-  COLS.forEach(col => { document.getElementById('inp-'+col).value = 0; });
+function showMsg(t,c){
+  const el=document.getElementById('form-msg');
+  el.textContent=t;el.style.color=c;
+  setTimeout(()=>el.textContent='',2200);
 }
 
-function showMsg(msg, type='success') {
-  const el = document.getElementById('form-msg');
-  el.textContent = msg;
-  el.style.color = type === 'success' ? 'var(--color-text-success)' : 'var(--color-text-danger)';
-  setTimeout(() => el.textContent = '', 2500);
-}
-
-function render() {
-  renderSummary();
+function render(){
+  const total=data.reduce((s,r)=>s+COLS.reduce((a,c)=>a+(r[c]||0),0),0);
+  document.getElementById('m-total').textContent=total.toLocaleString();
+  document.getElementById('m-days').textContent=data.length;
+  document.getElementById('m-avg').textContent=data.length?Math.round(total/data.length).toLocaleString():'—';
   renderTable();
-  if (document.getElementById('view-chart').style.display !== 'none') renderCharts();
+  if(document.getElementById('view-grafik').style.display!=='none')renderChart();
 }
 
-function renderSummary() {
-  const total = data.reduce((s,r) => s + COLS.reduce((a,c) => a + (r[c]||0), 0), 0);
-  document.getElementById('sum-total').textContent = total.toLocaleString();
-  document.getElementById('sum-days').textContent = data.length;
-  document.getElementById('sum-avg').textContent = data.length ? Math.round(total/data.length).toLocaleString() : '—';
-  document.getElementById('total-entries-badge').textContent = data.length + ' entries';
-}
-
-function renderTable() {
-  const thead = document.querySelector('#data-table thead');
-  const tbody = document.querySelector('#data-table tbody');
-  thead.innerHTML = '<tr><th>Tanggal</th>' + COLS.map(c=>`<th>${c}</th>`).join('') + '<th>Total</th></tr>';
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="14" class="empty">Belum ada data.</td></tr>'; return; }
-  tbody.innerHTML = data.map(r => {
-    const tot = COLS.reduce((s,c) => s+(r[c]||0), 0);
-    return `<tr><td>${fmt(r.date)}</td>${COLS.map(c=>`<td>${r[c]||0}</td>`).join('')}<td style="font-weight:500;">${tot}</td></tr>`;
+function renderTable(){
+  const thead=document.querySelector('#data-table thead');
+  const tbody=document.querySelector('#data-table tbody');
+  thead.innerHTML='<tr><th>Tanggal</th>'+COLS.map(c=>`<th>${c}</th>`).join('')+'<th>Total</th></tr>';
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="14" style="text-align:center;padding:2rem;color:#555">Belum ada data. Isi form untuk memulai.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=data.map(r=>{
+    const tot=COLS.reduce((s,c)=>s+(r[c]||0),0);
+    return`<tr><td>${fmtDate(r.date)}</td>${COLS.map(c=>`<td>${r[c]||0}</td>`).join('')}<td style="font-weight:700;color:#fff">${tot}</td></tr>`;
   }).join('');
 }
 
-function renderCharts() {
-  if (!data.length) return;
-
-  const labels = data.map(r => fmt(r.date));
-  const datasets = COLS.map((col, i) => ({
-    label: col,
-    data: data.map(r => r[col]||0),
-    backgroundColor: COLORS[i] + '99',
-    borderColor: COLORS[i],
-    borderWidth: 1
+function renderChart(){
+  const labels=data.map(r=>fmtDate(r.date));
+  const datasets=COLS.map((col,i)=>({
+    label:col,
+    data:data.map(r=>r[col]||0),
+    backgroundColor:PAL[i]+'cc',
+    borderColor:PAL[i],
+    borderWidth:1
   }));
-
-  if (chartTrend) chartTrend.destroy();
-  chartTrend = new Chart(document.getElementById('chart-trend'), {
-    type: 'bar',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { stacked: true, ticks: { font: { size: 11 } } }, y: { stacked: true, ticks: { font: { size: 11 } } } }
-    }
-  });
-
-  const totals = COLS.map(col => data.reduce((s,r) => s+(r[col]||0), 0));
-  if (chartDist) chartDist.destroy();
-  chartDist = new Chart(document.getElementById('chart-dist'), {
-    type: 'doughnut',
-    data: {
-      labels: COLS,
-      datasets: [{ data: totals, backgroundColor: COLORS, borderWidth: 0 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 10, padding: 8 } } }
-    }
-  });
-
-  const dailyTotals = data.map(r => COLS.reduce((s,c) => s+(r[c]||0), 0));
-  if (chartDaily) chartDaily.destroy();
-  chartDaily = new Chart(document.getElementById('chart-daily'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{ label: 'Total unit', data: dailyTotals, borderColor: '#185FA5', backgroundColor: '#185FA520', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#185FA5' }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { ticks: { font: { size: 11 } } }, y: { ticks: { font: { size: 11 } } } }
+  document.getElementById('chart-legend').innerHTML=COLS.map((c,i)=>
+    `<span class="legend-item"><span class="dot" style="background:${PAL[i]}"></span>${c}</span>`
+  ).join('');
+  if(chartMain)chartMain.destroy();
+  chartMain=new Chart(document.getElementById('chart-main'),{
+    type:'bar',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{stacked:true,ticks:{color:'#888',font:{size:10}},grid:{color:'#2a2a2a'}},
+        y:{stacked:true,ticks:{color:'#888',font:{size:10}},grid:{color:'#2a2a2a'}}
+      }
     }
   });
 }
 
-let activeTab = 'table';
-function switchTab(tab, el) {
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('view-table').style.display = tab === 'table' ? '' : 'none';
-  document.getElementById('view-chart').style.display = tab === 'chart' ? '' : 'none';
-  if (tab === 'chart') renderCharts();
+function switchTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('view-tabel').style.display=tab==='tabel'?'':'none';
+  document.getElementById('view-grafik').style.display=tab==='grafik'?'':'none';
+  if(tab==='grafik')renderChart();
 }
 
-buildForm();
 render();
 </script>
+</body>
+</html>
