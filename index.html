@@ -1,18 +1,15 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Report Warehouse</title>
+<h2 class="sr-only">Daily Report Warehouse — dark dashboard dengan input form dan preview laporan harian</h2>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#111;font-family:Arial,sans-serif;padding:24px}
-.wrap{background:#1a1a1a;color:#e8e8e8;padding:24px;border-radius:10px;min-height:100vh}
-.section-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px}
+.wrap{background:#1a1a1a;color:#e8e8e8;font-family:Arial,sans-serif;padding:20px;border-radius:10px;min-height:400px}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.top-title{font-size:12px;font-weight:700;color:#aaa;letter-spacing:.08em;text-transform:uppercase}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
 .mc{background:#242424;border:1px solid #333;border-radius:8px;padding:14px 16px}
 .mc-label{font-size:11px;color:#888;margin-bottom:6px}
 .mc-val{font-size:28px;font-weight:700;color:#fff}
+.section-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
 .split{display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start}
 .form-panel{background:#242424;border:1px solid #333;border-radius:8px;padding:16px}
 .fg{margin-bottom:10px}
@@ -23,6 +20,7 @@ body{background:#111;font-family:Arial,sans-serif;padding:24px}
 .save-btn{width:100%;padding:9px;background:#3a3a3a;color:#fff;border:1px solid #555;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px}
 .save-btn:hover{background:#444}
 .save-btn:active{transform:scale(0.98)}
+.save-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .msg{font-size:11px;text-align:center;margin-top:6px;min-height:14px}
 .preview-panel{background:#242424;border:1px solid #333;border-radius:8px;overflow:hidden}
 .tabs{display:flex;gap:0;border-bottom:1px solid #333}
@@ -30,30 +28,43 @@ body{background:#111;font-family:Arial,sans-serif;padding:24px}
 .tab.on{color:#fff;border-bottom:2px solid #fff}
 .tbl-wrap{overflow-x:auto;padding:12px}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:#2e2e2e;color:#888;font-weight:600;padding:8px;text-align:right;border-bottom:1px solid #333;white-space:nowrap;font-size:11px}
+th{background:#2e2e2e;color:#888;font-weight:600;padding:8px 8px;text-align:right;border-bottom:1px solid #333;white-space:nowrap;font-size:11px}
 th:first-child{text-align:left}
 td{padding:9px 8px;text-align:right;border-bottom:1px solid #2a2a2a;color:#e8e8e8;font-size:12px}
 td:first-child{text-align:left;font-weight:600;color:#fff}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#2c2c2c}
 .chart-area{padding:14px}
-.chart-wrap{position:relative;height:260px}
+.chart-wrap{position:relative;height:200px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-bottom:10px}
 .legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#aaa}
 .dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.empty{text-align:center;padding:2rem;color:#555;font-size:12px}
 .divider{border:none;border-top:1px solid #333;margin:12px 0}
-.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.app-title{font-size:16px;font-weight:700;color:#fff}
-.app-sub{font-size:12px;color:#666;margin-top:2px}
+/* sync bar */
+.sync-bar{display:flex;align-items:center;gap:8px;font-size:11px;color:#888;padding:6px 10px;background:#222;border:1px solid #333;border-radius:6px;margin-bottom:14px}
+.sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-green{background:#2ebc8a}
+.dot-yellow{background:#d09030;animation:pulse 1.2s ease-in-out infinite}
+.dot-red{background:#c04040}
+.sync-actions{margin-left:auto;display:flex;gap:6px}
+.sync-btn{background:#2a2a2a;color:#aaa;border:1px solid #444;border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer}
+.sync-btn:hover{background:#333;color:#fff}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
-</head>
-<body>
+
 <div class="wrap">
 
   <div class="top-bar">
-    <div>
-      <div class="app-title">Daily Report — Warehouse</div>
-      <div class="app-sub" id="hdr-date"></div>
+    <div class="section-title">Daily Report — Warehouse</div>
+  </div>
+
+  <!-- Sync status bar -->
+  <div class="sync-bar" id="sync-bar">
+    <span class="sync-dot dot-yellow" id="sync-dot"></span>
+    <span id="sync-msg">Menghubungkan ke Google Sheets…</span>
+    <div class="sync-actions">
+      <button class="sync-btn" onclick="syncFromSheet()" id="btn-sync">↻ Refresh</button>
     </div>
   </div>
 
@@ -76,7 +87,7 @@ tr:hover td{background:#2c2c2c}
       <div class="section-title" style="margin-top:8px">Produk</div>
       <div class="cols2" id="cols-grid"></div>
       <hr class="divider">
-      <button class="save-btn" onclick="submitForm()">💾 Simpan data</button>
+      <button class="save-btn" onclick="submitForm()" id="btn-submit">💾 Simpan data</button>
       <p class="msg" id="form-msg"></p>
     </div>
 
@@ -88,7 +99,7 @@ tr:hover td{background:#2c2c2c}
 
       <div id="view-tabel">
         <div class="tbl-wrap">
-          <table id="data-table"><thead></thead><tbody></tbody></table>
+          <table id="data-table"><thead></thead><tbody><tr><td colspan="14" class="empty">Memuat data dari Google Sheets…</td></tr></tbody></table>
         </div>
       </div>
 
@@ -96,7 +107,7 @@ tr:hover td{background:#2c2c2c}
         <div class="chart-area">
           <div class="legend" id="chart-legend"></div>
           <div class="chart-wrap">
-            <canvas id="chart-main"></canvas>
+            <canvas id="chart-main" role="img" aria-label="Bar chart stacked tren produk per hari">Tren produk harian.</canvas>
           </div>
         </div>
       </div>
@@ -107,28 +118,84 @@ tr:hover td{background:#2c2c2c}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyVdtxdwaIUrRku0_LalxOMP0eI5ccGiBSZr9S-pyoTICKlOyjdbifDSsgyqG0MWbMmmA/exec';
+
 const COLS=['Nas8','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention','Standing','TV','Router','Rangka'];
 const PAL=['#4e8fd4','#2ebc8a','#e07050','#d46080','#8a8a8a','#80b840','#d09030','#c04040','#7060c0','#3080c0','#608050','#b05030'];
 
-const SEED=[
-  {date:'2026-05-20',Nas8:50,Nas16:4,Nas50:1,Ldx8:10,Ldx16:20,Ldx30:1,Relink:100,Extention:4,Standing:50,TV:2,Router:2,Rangka:2},
-  {date:'2026-05-21',Nas8:25,Nas16:2,Nas50:3,Ldx8:1,Ldx16:21,Ldx30:2,Relink:98,Extention:40,Standing:45,TV:2,Router:2,Rangka:2},
-];
-
-let data=JSON.parse(localStorage.getItem('wh_daily_v1')||'null')||SEED;
+let data=[];
 let chartMain;
+let isSaving=false;
 
-function save(){try{localStorage.setItem('wh_daily_v1',JSON.stringify(data));}catch(e){}}
+// ─── LOCAL STORAGE ────────────────────────────────────────────────────────────
+function saveLocal(){try{localStorage.setItem('wh3_daily',JSON.stringify(data));}catch(e){}}
+function loadLocal(){return JSON.parse(localStorage.getItem('wh3_daily')||'null');}
 
-function fmtDate(d){
+// ─── SYNC STATUS ──────────────────────────────────────────────────────────────
+function setSyncStatus(state,msg){
+  const dot=document.getElementById('sync-dot');
+  const msgEl=document.getElementById('sync-msg');
+  dot.className='sync-dot';
+  if(state==='ok')dot.classList.add('dot-green');
+  else if(state==='loading')dot.classList.add('dot-yellow');
+  else dot.classList.add('dot-red');
+  msgEl.textContent=msg;
+}
+function nowStr(){return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
+
+// ─── FETCH FROM GSHEET ────────────────────────────────────────────────────────
+async function syncFromSheet(){
+  setSyncStatus('loading','Mengambil data dari Google Sheets…');
+  document.getElementById('btn-sync').disabled=true;
+  try{
+    const res=await fetch(GAS_URL+'?action=read',{method:'GET'});
+    const json=await res.json();
+    if(json.status==='ok'&&Array.isArray(json.data)){
+      if(json.data.length>0){
+        data=json.data;
+        saveLocal();
+        setSyncStatus('ok','Tersinkron dengan Google Sheets · '+nowStr());
+      } else {
+        const local=loadLocal();
+        if(local&&local.length)data=local;
+        setSyncStatus('ok','Sheet kosong · pakai data lokal · '+nowStr());
+      }
+    } else throw new Error(json.message||'Respons tidak dikenal');
+  }catch(e){
+    const local=loadLocal();
+    if(local&&local.length){
+      data=local;
+      setSyncStatus('red','⚠ Gagal konek GSheet · pakai cache lokal ('+e.message+')');
+    } else {
+      setSyncStatus('red','⚠ Gagal konek GSheet · tidak ada cache ('+e.message+')');
+    }
+  }
+  document.getElementById('btn-sync').disabled=false;
+  render();
+}
+
+// ─── SAVE TO GSHEET ───────────────────────────────────────────────────────────
+async function saveToSheet(row){
+  const res=await fetch(GAS_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'write',row})
+  });
+  const json=await res.json();
+  if(json.status!=='ok')throw new Error(json.message||'Gagal simpan');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function fmt(d){
   const[y,m,day]=d.split('-');
   const mo=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  return`${parseInt(day)} ${mo[parseInt(m)-1]} ${y}`;
+  return`${parseInt(day)} ${mo[parseInt(m)-1]}\n${y}`;
 }
 
 document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
-document.getElementById('hdr-date').textContent=fmtDate(new Date().toISOString().slice(0,10));
 
+// ─── BUILD FORM ───────────────────────────────────────────────────────────────
 COLS.forEach(col=>{
   const g=document.createElement('div');
   g.className='fg';
@@ -136,25 +203,50 @@ COLS.forEach(col=>{
   document.getElementById('cols-grid').appendChild(g);
 });
 
-function submitForm(){
+// ─── SUBMIT FORM ──────────────────────────────────────────────────────────────
+async function submitForm(){
+  if(isSaving)return;
   const date=document.getElementById('inp-date').value;
   if(!date){showMsg('Pilih tanggal!','#c04040');return;}
   const row={date};
   COLS.forEach(c=>{row[c]=parseInt(document.getElementById('inp-'+c).value)||0;});
+
+  isSaving=true;
+  const btn=document.getElementById('btn-submit');
+  btn.disabled=true;
+  btn.textContent='Menyimpan…';
+  showMsg('Mengirim ke Google Sheets…','#888');
+
+  // Update local dulu
   const idx=data.findIndex(r=>r.date===date);
   if(idx>=0)data[idx]=row;else data.push(row);
   data.sort((a,b)=>a.date.localeCompare(b.date));
-  save();render();
-  showMsg('✓ Tersimpan!','#2ebc8a');
+  saveLocal();
+  render();
+
+  // Kirim ke GSheet
+  try{
+    await saveToSheet(row);
+    setSyncStatus('ok','Tersinkron dengan Google Sheets · '+nowStr());
+    showMsg('✓ Tersimpan ke Google Sheets!','#2ebc8a');
+  }catch(e){
+    setSyncStatus('red','⚠ Simpan lokal OK · GSheet gagal: '+e.message);
+    showMsg('⚠ Lokal OK, GSheet gagal: '+e.message,'#d09030');
+  }
+
   COLS.forEach(c=>{document.getElementById('inp-'+c).value=0;});
+  btn.disabled=false;
+  btn.textContent='💾 Simpan data';
+  isSaving=false;
 }
 
 function showMsg(t,c){
   const el=document.getElementById('form-msg');
   el.textContent=t;el.style.color=c;
-  setTimeout(()=>el.textContent='',2200);
+  if(c==='#2ebc8a')setTimeout(()=>el.textContent='',2500);
 }
 
+// ─── RENDER ───────────────────────────────────────────────────────────────────
 function render(){
   const total=data.reduce((s,r)=>s+COLS.reduce((a,c)=>a+(r[c]||0),0),0);
   document.getElementById('m-total').textContent=total.toLocaleString();
@@ -168,18 +260,15 @@ function renderTable(){
   const thead=document.querySelector('#data-table thead');
   const tbody=document.querySelector('#data-table tbody');
   thead.innerHTML='<tr><th>Tanggal</th>'+COLS.map(c=>`<th>${c}</th>`).join('')+'<th>Total</th></tr>';
-  if(!data.length){
-    tbody.innerHTML='<tr><td colspan="14" style="text-align:center;padding:2rem;color:#555">Belum ada data. Isi form untuk memulai.</td></tr>';
-    return;
-  }
+  if(!data.length){tbody.innerHTML='<tr><td colspan="14" class="empty">Belum ada data. Isi form untuk memulai.</td></tr>';return;}
   tbody.innerHTML=data.map(r=>{
     const tot=COLS.reduce((s,c)=>s+(r[c]||0),0);
-    return`<tr><td>${fmtDate(r.date)}</td>${COLS.map(c=>`<td>${r[c]||0}</td>`).join('')}<td style="font-weight:700;color:#fff">${tot}</td></tr>`;
+    return`<tr><td>${fmt(r.date)}</td>${COLS.map(c=>`<td>${r[c]||0}</td>`).join('')}<td style="font-weight:700;color:#fff">${tot}</td></tr>`;
   }).join('');
 }
 
 function renderChart(){
-  const labels=data.map(r=>fmtDate(r.date));
+  const labels=data.map(r=>fmt(r.date));
   const datasets=COLS.map((col,i)=>({
     label:col,
     data:data.map(r=>r[col]||0),
@@ -213,7 +302,6 @@ function switchTab(tab,el){
   if(tab==='grafik')renderChart();
 }
 
-render();
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+syncFromSheet();
 </script>
-</body>
-</html>
