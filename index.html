@@ -82,7 +82,10 @@ tr:hover td{background:#2c2c2c}
     <span id="sync-msg">Connecting to Google Sheets…</span>
   </div>
 
-  <div class="section-title">Today's Report — <span id="today-section-date" style="text-transform:none;font-weight:400"></span></div>
+  <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+    <span>Today's Report — <span id="today-section-date" style="text-transform:none;font-weight:400"></span></span>
+    <button onclick="copyBroadcast()" id="btn-copy" style="background:#2ebc8a;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.02em">📋 Copy WA Report</button>
+  </div>
   <div class="metrics">
     <div class="mc"><div class="mc-label">Machine (Today)</div><div class="mc-val" id="m-wh">—</div></div>
     <div class="mc"><div class="mc-label">PB Warehouse (Today)</div><div class="mc-val" id="m-pbwh">—</div></div>
@@ -405,6 +408,59 @@ function switchTab(tab,el){
   document.getElementById('view-table').style.display = tab==='table'?'':'none';
   document.getElementById('view-chart').style.display = tab==='chart'?'':'none';
   if(tab==='chart'){ renderIndividualCharts(); }
+}
+
+function copyBroadcast(){
+  const todayKey = todayJKT();
+  const todayRow = data.find(r => parseDate(r.date) === todayKey);
+  if(!todayRow){
+    alert('Belum ada data untuk hari ini!');
+    return;
+  }
+  const [y,m,d] = todayKey.split('-');
+  const dateLabel = `${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`;
+
+  const pad = (str, len) => String(str).padEnd(len);
+
+  let lines = [];
+  lines.push(`📦 *DAILY REPORT WAREHOUSE*`);
+  lines.push(`📅 ${dateLabel}`);
+  lines.push(``);
+  lines.push(`⚙️ *Machine Count*`);
+  CAT_MACHINE.forEach(col => {
+    lines.push(`• ${pad(col, 10)}: ${Number(todayRow[col])||0}`);
+  });
+  lines.push(`• ${pad('Total', 10)}: ${sumCols(todayRow, CAT_WH)}`);
+  lines.push(``);
+  lines.push(`📦 *Other*`);
+  CAT_OTHER.forEach(col => {
+    lines.push(`• ${pad(col, 10)}: ${Number(todayRow[col])||0}`);
+  });
+  lines.push(``);
+  lines.push(`🔋 *Powerbank*`);
+  lines.push(`• ${pad('PB WH', 10)}: ${Number(todayRow['PBWH'])||0}`);
+  lines.push(`• ${pad('PB Deploy', 10)}: ${Number(todayRow['PBDEP'])||0}`);
+
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#2ebc8a';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+  }).catch(() => {
+    // Fallback kalau clipboard API ga support
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('btn-copy');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#2ebc8a';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+  });
 }
 
 syncFromSheet();
