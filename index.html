@@ -45,6 +45,11 @@ td:first-child{text-align:left;font-weight:600;color:#fff}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#2c2c2c}
 .chart-area{padding:14px}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.chart-card{background:#1e1e1e;border:1px solid #2e2e2e;border-radius:8px;padding:10px}
+.chart-card-title{font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.chart-group-title{font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #2a2a2a}
+.chart-card-wrap{position:relative;height:120px}
 .chart-section{margin-bottom:18px}
 .chart-section-title{font-size:10px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #2a2a2a}
 .chart-wrap{position:relative;height:180px}
@@ -93,6 +98,9 @@ tr:hover td{background:#2c2c2c}
       <div class="cat-title">⚙️ Machine Count</div>
       <div class="cols2" id="grid-wh"></div>
 
+      <div class="cat-title">📦 Other</div>
+      <div class="cols2" id="grid-other"></div>
+
       <div class="cat-title">🔋 Powerbank WH Stock</div>
       <div class="fg"><label>Quantity</label><input type="number" id="inp-PBWH" min="0" value="0"></div>
 
@@ -124,33 +132,12 @@ tr:hover td{background:#2c2c2c}
       </div>
 
       <div id="view-chart" style="display:none" class="chart-area">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div>
-            <div class="chart-section">
-              <div class="chart-section-title">Machine Count — Bar (per product)</div>
-              <div class="legend" id="leg-wh-bar"></div>
-              <div class="chart-wrap-lg"><canvas id="chart-wh-bar"></canvas></div>
-            </div>
-            <div class="chart-section">
-              <div class="chart-section-title">Machine Count — Line (total trend)</div>
-              <div class="chart-wrap"><canvas id="chart-wh-line"></canvas></div>
-            </div>
-          </div>
-          <div>
-            <div class="chart-section">
-              <div class="chart-section-title">Powerbank WH Stock — Bar</div>
-              <div class="chart-wrap-lg"><canvas id="chart-pbwh-bar"></canvas></div>
-            </div>
-            <div class="chart-section">
-              <div class="chart-section-title">Powerbank Deploy Stock — Bar</div>
-              <div class="chart-wrap"><canvas id="chart-pbdep-bar"></canvas></div>
-            </div>
-            <div class="chart-section">
-              <div class="chart-section-title">Powerbank — Line (WH vs Deploy)</div>
-              <div class="chart-wrap"><canvas id="chart-pb-line"></canvas></div>
-            </div>
-          </div>
-        </div>
+        <div class="chart-group-title">⚙️ Machine Count</div>
+        <div class="chart-grid" id="chart-grid-machine"></div>
+        <div class="chart-group-title" style="margin-top:18px">📦 Other</div>
+        <div class="chart-grid" id="chart-grid-other"></div>
+        <div class="chart-group-title" style="margin-top:18px">🔋 Powerbank</div>
+        <div class="chart-grid" id="chart-grid-pb"></div>
       </div>
     </div>
   </div>
@@ -160,7 +147,9 @@ tr:hover td{background:#2c2c2c}
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw9Xgz7B0mHgU7kIiXBexbjb0hJJnQOZNGmdZs3tJRMb8_5NnnBKeU5j_IWyjKRyAs_hw/exec';
 
-const CAT_WH  = ['Nas8','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention','Standing','TV','Router','Rangka'];
+const CAT_MACHINE = ['Nas8','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention'];
+const CAT_OTHER   = ['Standing','TV','Router','Rangka'];
+const CAT_WH      = [...CAT_MACHINE, ...CAT_OTHER];
 const PAL12   = ['#4e8fd4','#2ebc8a','#e07050','#d46080','#8a8a8a','#80b840','#d09030','#c04040','#7060c0','#3080c0','#608050','#b05030'];
 const ALL_COLS = [...CAT_WH, 'PBWH', 'PBDEP'];
 const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -174,10 +163,16 @@ function loadLocal(){ return JSON.parse(localStorage.getItem('wh_daily_v2') || '
 (function buildForm(){
   document.getElementById('inp-date').value = new Date().toISOString().slice(0,10);
   const grid = document.getElementById('grid-wh');
-  CAT_WH.forEach(col => {
+  CAT_MACHINE.forEach(col => {
     const g = document.createElement('div'); g.className = 'fg';
     g.innerHTML = `<label>${col}</label><input type="number" id="inp-${col}" min="0" value="0">`;
     grid.appendChild(g);
+  });
+  const gridOther = document.getElementById('grid-other');
+  CAT_OTHER.forEach(col => {
+    const g = document.createElement('div'); g.className = 'fg';
+    g.innerHTML = `<label>${col}</label><input type="number" id="inp-${col}" min="0" value="0">`;
+    gridOther.appendChild(g);
   });
 })();
 
@@ -196,11 +191,13 @@ async function syncFromSheet(){
     const res  = await fetch(GAS_URL + '?action=getAll');
     const json = await res.json();
     if(json.status==='ok' && Array.isArray(json.data)){
-      if(json.data.length > 0){ data = json.data; saveLocal(); }
-      else { const l = loadLocal(); if(l && l.length) data = l; }
+      // FIX: Selalu pakai data dari GSheet, termasuk kalau kosong
+      data = json.data;
+      saveLocal();
       setSyncStatus('ok','Synced · '+nowStr());
     } else throw new Error(json.message||'Error');
   } catch(e){
+    // Fallback ke localStorage hanya kalau koneksi gagal total
     const l = loadLocal(); if(l && l.length) data = l;
     setSyncStatus('red','⚠ Connection failed — showing local data');
   }
@@ -281,7 +278,7 @@ function render(){
   updateFilterDropdown();
   renderTable();
   const active = document.querySelector('.tab.on');
-  if(active && active.textContent.trim()==='Charts'){ renderChartsMesin(); renderChartsPB(); }
+  if(active && active.textContent.trim()==='Charts'){ renderIndividualCharts(); }
 }
 
 function updateFilterDropdown(){
@@ -302,8 +299,20 @@ function renderTable(){
   const thead = document.querySelector('#data-table thead');
   const tbody = document.querySelector('#data-table tbody');
   document.getElementById('filter-count').textContent = fd.length + ' rows shown';
-  thead.innerHTML = '<tr><th>Date</th>'+CAT_WH.map(l=>`<th>${l}</th>`).join('')+'<th>Total Machine</th><th>PB WH</th><th>PB Deploy</th></tr>';
-  if(!fd.length){ tbody.innerHTML='<tr><td colspan="16" class="empty">No data available.</td></tr>'; return; }
+  thead.innerHTML =
+    `<tr>
+      <th rowspan="2" style="vertical-align:bottom">Date</th>
+      <th colspan="${CAT_MACHINE.length}" style="text-align:center;color:#4e8fd4;border-bottom:1px solid #4e8fd455">Machine Count</th>
+      <th colspan="${CAT_OTHER.length}" style="text-align:center;color:#2ebc8a;border-bottom:1px solid #2ebc8a55">Other</th>
+      <th rowspan="2" style="vertical-align:bottom">Total Machine</th>
+      <th rowspan="2" style="vertical-align:bottom">PB WH</th>
+      <th rowspan="2" style="vertical-align:bottom">PB Deploy</th>
+    </tr>
+    <tr>
+      ${CAT_MACHINE.map(l=>`<th>${l}</th>`).join('')}
+      ${CAT_OTHER.map(l=>`<th>${l}</th>`).join('')}
+    </tr>`;
+  if(!fd.length){ tbody.innerHTML=`<tr><td colspan="${CAT_WH.length+4}" class="empty">No data available.</td></tr>`; return; }
   tbody.innerHTML = fd.map(r => {
     const tot = sumCols(r, CAT_WH);
     return `<tr><td>${fmt(r.date)}</td>${CAT_WH.map(c=>`<td>${Number(r[c])||0}</td>`).join('')}<td style="font-weight:700;color:#fff">${tot}</td><td style="color:#f0a030">${Number(r['PBWH'])||0}</td><td style="color:#e06010">${Number(r['PBDEP'])||0}</td></tr>`;
@@ -319,28 +328,62 @@ function makeBarDS(cols,labels,pal){ return cols.map((col,i)=>({label:labels[i],
 function makeLineDS(col,label,color){ return {label,data:data.map(r=>Number(r[col])||0),borderColor:color,backgroundColor:color+'30',fill:true,tension:0.3,pointRadius:3,pointBackgroundColor:color}; }
 function makeLineDSCols(cols,label,color){ return {label,data:data.map(r=>sumCols(r,cols)),borderColor:color,backgroundColor:color+'30',fill:true,tension:0.3,pointRadius:3,pointBackgroundColor:color}; }
 
-function renderChartsMesin(){
-  if(!data.length) return;
-  const labels = data.map(r=>fmt(r.date));
-  makeLegend('leg-wh-bar', CAT_WH, PAL12);
-  mkChart('wh-bar','chart-wh-bar','bar',labels,makeBarDS(CAT_WH,CAT_WH,PAL12),barOpts());
-  mkChart('wh-line','chart-wh-line','line',labels,[makeLineDSCols(CAT_WH,'Total Machine','#4e8fd4')],lineOpts(false));
+function singleLineOpts(color){ return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}`}}},scales:{x:{ticks:{color:'#666',font:{size:8},maxRotation:45},grid:{color:'#222'}},y:{ticks:{color:'#666',font:{size:8}},grid:{color:'#222'},beginAtZero:true}}}; }
+
+function buildChartGrid(gridId, cols, palette){
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  cols.forEach((col, i) => {
+    const card = document.createElement('div'); card.className = 'chart-card';
+    card.innerHTML = `<div class="chart-card-title">${col}</div><div class="chart-card-wrap"><canvas id="chart-ind-${col}"></canvas></div>`;
+    grid.appendChild(card);
+  });
 }
 
-function renderChartsPB(){
+function renderIndividualCharts(){
   if(!data.length) return;
   const labels = data.map(r=>fmt(r.date));
-  mkChart('pbwh-bar','chart-pbwh-bar','bar',labels,[{label:'PB WH',data:data.map(r=>Number(r['PBWH'])||0),backgroundColor:'#f0a030cc',borderColor:'#f0a030',borderWidth:1}],barOpts());
-  mkChart('pbdep-bar','chart-pbdep-bar','bar',labels,[{label:'PB Deploy',data:data.map(r=>Number(r['PBDEP'])||0),backgroundColor:'#e06010cc',borderColor:'#e06010',borderWidth:1}],barOpts());
-  mkChart('pb-line','chart-pb-line','line',labels,[makeLineDS('PBWH','PB WH Stock','#f0a030'),makeLineDS('PBDEP','PB Deploy Stock','#e06010')],lineOpts(true));
+
+  buildChartGrid('chart-grid-machine', CAT_MACHINE, PAL12);
+  buildChartGrid('chart-grid-other', CAT_OTHER, PAL12.slice(8));
+  buildChartGrid('chart-grid-pb', ['PBWH','PBDEP'], ['#f0a030','#e06010']);
+
+  CAT_MACHINE.forEach((col,i) => {
+    const color = PAL12[i % PAL12.length];
+    destroyChart('ind-'+col);
+    charts['ind-'+col] = new Chart(document.getElementById('chart-ind-'+col), {
+      type:'line', data:{labels, datasets:[{data:data.map(r=>Number(r[col])||0), borderColor:color, backgroundColor:color+'25', fill:true, tension:0.3, pointRadius:2, pointBackgroundColor:color, borderWidth:2}]},
+      options: singleLineOpts(color)
+    });
+  });
+
+  CAT_OTHER.forEach((col,i) => {
+    const color = PAL12[(i+8) % PAL12.length];
+    destroyChart('ind-'+col);
+    charts['ind-'+col] = new Chart(document.getElementById('chart-ind-'+col), {
+      type:'line', data:{labels, datasets:[{data:data.map(r=>Number(r[col])||0), borderColor:color, backgroundColor:color+'25', fill:true, tension:0.3, pointRadius:2, pointBackgroundColor:color, borderWidth:2}]},
+      options: singleLineOpts(color)
+    });
+  });
+
+  [['PBWH','#f0a030'],['PBDEP','#e06010']].forEach(([col,color]) => {
+    destroyChart('ind-'+col);
+    charts['ind-'+col] = new Chart(document.getElementById('chart-ind-'+col), {
+      type:'line', data:{labels, datasets:[{data:data.map(r=>Number(r[col])||0), borderColor:color, backgroundColor:color+'25', fill:true, tension:0.3, pointRadius:2, pointBackgroundColor:color, borderWidth:2}]},
+      options: singleLineOpts(color)
+    });
+  });
 }
+
+function renderChartsMesin(){ renderIndividualCharts(); }
+function renderChartsPB(){}
 
 function switchTab(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
   document.getElementById('view-table').style.display = tab==='table'?'':'none';
   document.getElementById('view-chart').style.display = tab==='chart'?'':'none';
-  if(tab==='chart'){ renderChartsMesin(); renderChartsPB(); }
+  if(tab==='chart'){ renderIndividualCharts(); }
 }
 
 syncFromSheet();
