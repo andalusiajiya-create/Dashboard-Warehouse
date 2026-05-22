@@ -108,10 +108,10 @@ tr:hover td{background:#2c2c2c}
       <div class="cols2" id="grid-other"></div>
 
       <div class="cat-title">🔋 Powerbank WH Stock</div>
-      <div class="fg"><label>Quantity</label><input type="number" id="inp-PBWH" min="0" value="0"></div>
+      <div class="fg"><label>Quantity</label><input type="number" id="inp-PBWH" min="0" placeholder="0"></div>
 
       <div class="cat-title">🔋 Powerbank Deploy Stock</div>
-      <div class="fg"><label>Quantity</label><input type="number" id="inp-PBDEP" min="0" value="0"></div>
+      <div class="fg"><label>Quantity</label><input type="number" id="inp-PBDEP" min="0" placeholder="0"></div>
 
       <hr class="divider">
       <button class="save-btn" onclick="submitForm()" id="btn-submit">Save Data</button>
@@ -153,10 +153,10 @@ tr:hover td{background:#2c2c2c}
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw9Xgz7B0mHgU7kIiXBexbjb0hJJnQOZNGmdZs3tJRMb8_5NnnBKeU5j_IWyjKRyAs_hw/exec';
 
-const CAT_MACHINE = ['Nas8','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention'];
+const CAT_MACHINE = ['Nas8','Nas8Powernow','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention'];
 const CAT_OTHER   = ['Standing','TV','Router','Rangka'];
 const CAT_WH      = [...CAT_MACHINE, ...CAT_OTHER];
-const PAL12   = ['#4e8fd4','#2ebc8a','#e07050','#d46080','#8a8a8a','#80b840','#d09030','#c04040','#7060c0','#3080c0','#608050','#b05030'];
+const PAL12   = ['#4e8fd4','#5bc4f5','#2ebc8a','#e07050','#d46080','#8a8a8a','#80b840','#d09030','#c04040','#7060c0','#3080c0','#608050','#b05030'];
 const ALL_COLS = [...CAT_WH, 'PBWH', 'PBDEP'];
 const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -173,18 +173,21 @@ function todayJKT(){
   return jkt.toISOString().slice(0,10);
 }
 
+const COL_LABEL = { 'Nas8Powernow': 'Nas8 Powernow' };
+function colLabel(col){ return COL_LABEL[col] || col; }
+
 (function buildForm(){
   document.getElementById('inp-date').value = todayJKT();
   const grid = document.getElementById('grid-wh');
   CAT_MACHINE.forEach(col => {
     const g = document.createElement('div'); g.className = 'fg';
-    g.innerHTML = `<label>${col}</label><input type="number" id="inp-${col}" min="0" value="0">`;
+    g.innerHTML = `<label>${colLabel(col)}</label><input type="number" id="inp-${col}" min="0" placeholder="0">`;
     grid.appendChild(g);
   });
   const gridOther = document.getElementById('grid-other');
   CAT_OTHER.forEach(col => {
     const g = document.createElement('div'); g.className = 'fg';
-    g.innerHTML = `<label>${col}</label><input type="number" id="inp-${col}" min="0" value="0">`;
+    g.innerHTML = `<label>${col}</label><input type="number" id="inp-${col}" min="0" placeholder="0">`;
     gridOther.appendChild(g);
   });
 })();
@@ -256,7 +259,7 @@ async function submitForm(){
     showMsg('⚠ Saved locally, GSheet failed','#d09030');
   }
 
-  ALL_COLS.forEach(c => { const el=document.getElementById('inp-'+c); if(el) el.value=0; });
+  ALL_COLS.forEach(c => { const el=document.getElementById('inp-'+c); if(el) el.value=''; });
   btn.disabled = false; btn.textContent = '💾 Save Data';
   isSaving = false;
 }
@@ -336,8 +339,8 @@ function renderTable(){
       <th rowspan="2" style="vertical-align:bottom">PB Deploy</th>
     </tr>
     <tr>
-      ${CAT_MACHINE.map(l=>`<th>${l}</th>`).join('')}
-      ${CAT_OTHER.map(l=>`<th>${l}</th>`).join('')}
+      ${CAT_MACHINE.map(l=>`<th>${colLabel(l)}</th>`).join('')}
+      ${CAT_OTHER.map(l=>`<th>${colLabel(l)}</th>`).join('')}
     </tr>`;
   if(!fd.length){ tbody.innerHTML=`<tr><td colspan="${CAT_WH.length+4}" class="empty">No data available.</td></tr>`; return; }
   tbody.innerHTML = fd.map(r => {
