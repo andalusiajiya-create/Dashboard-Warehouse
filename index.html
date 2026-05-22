@@ -1,307 +1,349 @@
-<h2 class="sr-only">Daily Report Warehouse — dark dashboard dengan input form dan preview laporan harian</h2>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Report Warehouse</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-.wrap{background:#1a1a1a;color:#e8e8e8;font-family:Arial,sans-serif;padding:20px;border-radius:10px;min-height:400px}
-.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
-.top-title{font-size:12px;font-weight:700;color:#aaa;letter-spacing:.08em;text-transform:uppercase}
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+body{background:#111;font-family:Arial,sans-serif;padding:24px}
+.wrap{background:#1a1a1a;color:#e8e8e8;padding:24px;border-radius:10px}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.top-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
 .mc{background:#242424;border:1px solid #333;border-radius:8px;padding:14px 16px}
 .mc-label{font-size:11px;color:#888;margin-bottom:6px}
-.mc-val{font-size:28px;font-weight:700;color:#fff}
+.mc-val{font-size:24px;font-weight:700;color:#fff}
 .section-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.cat-title{font-size:10px;font-weight:700;color:#555;letter-spacing:.06em;text-transform:uppercase;margin:10px 0 6px;padding:4px 0;border-bottom:1px solid #2a2a2a}
 .split{display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start}
 .form-panel{background:#242424;border:1px solid #333;border-radius:8px;padding:16px}
-.fg{margin-bottom:10px}
-.fg label{font-size:11px;color:#888;display:block;margin-bottom:4px;font-weight:600}
-.fg input{width:100%;background:#1e1e1e;border:1px solid #444;border-radius:6px;color:#e8e8e8;padding:6px 9px;font-size:13px}
+.fg{margin-bottom:8px}
+.fg label{font-size:11px;color:#888;display:block;margin-bottom:3px;font-weight:600}
+.fg input{width:100%;background:#1e1e1e;border:1px solid #444;border-radius:6px;color:#e8e8e8;padding:5px 8px;font-size:13px}
 .fg input:focus{outline:none;border-color:#666}
-.cols2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .save-btn{width:100%;padding:9px;background:#3a3a3a;color:#fff;border:1px solid #555;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px}
 .save-btn:hover{background:#444}
-.save-btn:active{transform:scale(0.98)}
-.save-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.save-btn:disabled{opacity:.5;cursor:not-allowed}
 .msg{font-size:11px;text-align:center;margin-top:6px;min-height:14px}
 .preview-panel{background:#242424;border:1px solid #333;border-radius:8px;overflow:hidden}
-.tabs{display:flex;gap:0;border-bottom:1px solid #333}
-.tab{padding:9px 18px;font-size:13px;font-weight:600;color:#888;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent}
+.tabs{display:flex;gap:0;border-bottom:1px solid #333;flex-wrap:wrap}
+.tab{padding:9px 14px;font-size:12px;font-weight:600;color:#888;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap}
 .tab.on{color:#fff;border-bottom:2px solid #fff}
+.filter-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #2a2a2a}
+.filter-bar label{font-size:11px;color:#888;font-weight:600;white-space:nowrap}
+.filter-bar select{background:#1e1e1e;border:1px solid #444;border-radius:6px;color:#e8e8e8;padding:4px 8px;font-size:12px;cursor:pointer}
+.filter-bar select:focus{outline:none;border-color:#666}
+.filter-count{font-size:11px;color:#555;margin-left:auto}
 .tbl-wrap{overflow-x:auto;padding:12px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:#2e2e2e;color:#888;font-weight:600;padding:8px 8px;text-align:right;border-bottom:1px solid #333;white-space:nowrap;font-size:11px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#2e2e2e;color:#888;font-weight:600;padding:7px;text-align:right;border-bottom:1px solid #333;white-space:nowrap;font-size:10px}
 th:first-child{text-align:left}
-td{padding:9px 8px;text-align:right;border-bottom:1px solid #2a2a2a;color:#e8e8e8;font-size:12px}
+td{padding:8px 7px;text-align:right;border-bottom:1px solid #2a2a2a;color:#e8e8e8;font-size:11px}
 td:first-child{text-align:left;font-weight:600;color:#fff}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#2c2c2c}
 .chart-area{padding:14px}
-.chart-wrap{position:relative;height:200px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-bottom:10px}
+.chart-section{margin-bottom:18px}
+.chart-section-title{font-size:10px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #2a2a2a}
+.chart-wrap{position:relative;height:180px}
+.chart-wrap-lg{position:relative;height:200px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin-bottom:8px}
 .legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#aaa}
 .dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 .empty{text-align:center;padding:2rem;color:#555;font-size:12px}
-.divider{border:none;border-top:1px solid #333;margin:12px 0}
-/* sync bar */
+.divider{border:none;border-top:1px solid #333;margin:10px 0}
 .sync-bar{display:flex;align-items:center;gap:8px;font-size:11px;color:#888;padding:6px 10px;background:#222;border:1px solid #333;border-radius:6px;margin-bottom:14px}
 .sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .dot-green{background:#2ebc8a}
 .dot-yellow{background:#d09030;animation:pulse 1.2s ease-in-out infinite}
 .dot-red{background:#c04040}
-.sync-actions{margin-left:auto;display:flex;gap:6px}
-.sync-btn{background:#2a2a2a;color:#aaa;border:1px solid #444;border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer}
+.sync-btn{background:#2a2a2a;color:#aaa;border:1px solid #444;border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer;margin-left:auto}
 .sync-btn:hover{background:#333;color:#fff}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
-
+</head>
+<body>
 <div class="wrap">
 
   <div class="top-bar">
-    <div class="section-title">Daily Report — Warehouse</div>
+    <div class="top-title">Daily Report — Warehouse</div>
+    <button class="sync-btn" onclick="syncFromSheet()" id="btn-sync">↻ Refresh from GSheet</button>
   </div>
 
-  <!-- Sync status bar -->
-  <div class="sync-bar" id="sync-bar">
+  <div class="sync-bar">
     <span class="sync-dot dot-yellow" id="sync-dot"></span>
-    <span id="sync-msg">Menghubungkan ke Google Sheets…</span>
-    <div class="sync-actions">
-      <button class="sync-btn" onclick="syncFromSheet()" id="btn-sync">↻ Refresh</button>
-    </div>
+    <span id="sync-msg">Connecting to Google Sheets…</span>
   </div>
 
-  <div class="section-title">Ringkasan hari ini</div>
+  <div class="section-title">Today's Report — <span id="today-section-date" style="text-transform:none;font-weight:400"></span></div>
   <div class="metrics">
-    <div class="mc"><div class="mc-label">Total produk</div><div class="mc-val" id="m-total">—</div></div>
-    <div class="mc"><div class="mc-label">Kategori</div><div class="mc-val">13</div></div>
-    <div class="mc"><div class="mc-label">Hari tercatat</div><div class="mc-val" id="m-days">0</div></div>
-    <div class="mc"><div class="mc-label">Rata-rata/hari</div><div class="mc-val" id="m-avg">—</div></div>
+    <div class="mc"><div class="mc-label">Machine (Today)</div><div class="mc-val" id="m-wh">—</div></div>
+    <div class="mc"><div class="mc-label">PB Warehouse (Today)</div><div class="mc-val" id="m-pbwh">—</div></div>
+    <div class="mc"><div class="mc-label">PB Deploy (Today)</div><div class="mc-val" id="m-pbdep">—</div></div>
+    <div class="mc"><div class="mc-label">Days Recorded</div><div class="mc-val" id="m-days">0</div></div>
   </div>
 
   <div class="split">
-
     <div class="form-panel">
-      <div class="section-title">Input form</div>
-      <div class="fg">
-        <label>Tanggal</label>
-        <input type="date" id="inp-date">
-      </div>
-      <div class="section-title" style="margin-top:8px">Produk</div>
-      <div class="cols2" id="cols-grid"></div>
+      <div class="section-title">Input Form</div>
+      <div class="fg"><label>Date</label><input type="date" id="inp-date"></div>
+
+      <div class="cat-title">⚙️ Machine Count</div>
+      <div class="cols2" id="grid-wh"></div>
+
+      <div class="cat-title">🔋 Powerbank WH Stock</div>
+      <div class="fg"><label>Quantity</label><input type="number" id="inp-PBWH" min="0" value="0"></div>
+
+      <div class="cat-title">🔋 Powerbank Deploy Stock</div>
+      <div class="fg"><label>Quantity</label><input type="number" id="inp-PBDEP" min="0" value="0"></div>
+
       <hr class="divider">
-      <button class="save-btn" onclick="submitForm()" id="btn-submit">💾 Simpan data</button>
+      <button class="save-btn" onclick="submitForm()" id="btn-submit">💾 Save Data</button>
       <p class="msg" id="form-msg"></p>
     </div>
 
     <div class="preview-panel">
       <div class="tabs">
-        <button class="tab on" onclick="switchTab('tabel',this)">Tabel data</button>
-        <button class="tab" onclick="switchTab('grafik',this)">Grafik</button>
+        <button class="tab on" onclick="switchTab('table',this)">Data Table</button>
+        <button class="tab" onclick="switchTab('chart',this)">Charts</button>
       </div>
 
-      <div id="view-tabel">
+      <div id="view-table">
+        <div class="filter-bar">
+          <label>Filter by month:</label>
+          <select id="filter-month" onchange="renderTable()">
+            <option value="">All months</option>
+          </select>
+          <span class="filter-count" id="filter-count"></span>
+        </div>
         <div class="tbl-wrap">
-          <table id="data-table"><thead></thead><tbody><tr><td colspan="14" class="empty">Memuat data dari Google Sheets…</td></tr></tbody></table>
+          <table id="data-table"><thead></thead><tbody><tr><td colspan="16" class="empty">Loading data…</td></tr></tbody></table>
         </div>
       </div>
 
-      <div id="view-grafik" style="display:none">
-        <div class="chart-area">
-          <div class="legend" id="chart-legend"></div>
-          <div class="chart-wrap">
-            <canvas id="chart-main" role="img" aria-label="Bar chart stacked tren produk per hari">Tren produk harian.</canvas>
+      <div id="view-chart" style="display:none" class="chart-area">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <div class="chart-section">
+              <div class="chart-section-title">Machine Count — Bar (per product)</div>
+              <div class="legend" id="leg-wh-bar"></div>
+              <div class="chart-wrap-lg"><canvas id="chart-wh-bar"></canvas></div>
+            </div>
+            <div class="chart-section">
+              <div class="chart-section-title">Machine Count — Line (total trend)</div>
+              <div class="chart-wrap"><canvas id="chart-wh-line"></canvas></div>
+            </div>
+          </div>
+          <div>
+            <div class="chart-section">
+              <div class="chart-section-title">Powerbank WH Stock — Bar</div>
+              <div class="chart-wrap-lg"><canvas id="chart-pbwh-bar"></canvas></div>
+            </div>
+            <div class="chart-section">
+              <div class="chart-section-title">Powerbank Deploy Stock — Bar</div>
+              <div class="chart-wrap"><canvas id="chart-pbdep-bar"></canvas></div>
+            </div>
+            <div class="chart-section">
+              <div class="chart-section-title">Powerbank — Line (WH vs Deploy)</div>
+              <div class="chart-wrap"><canvas id="chart-pb-line"></canvas></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyVdtxdwaIUrRku0_LalxOMP0eI5ccGiBSZr9S-pyoTICKlOyjdbifDSsgyqG0MWbMmmA/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw9Xgz7B0mHgU7kIiXBexbjb0hJJnQOZNGmdZs3tJRMb8_5NnnBKeU5j_IWyjKRyAs_hw/exec';
 
-const COLS=['Nas8','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention','Standing','TV','Router','Rangka'];
-const PAL=['#4e8fd4','#2ebc8a','#e07050','#d46080','#8a8a8a','#80b840','#d09030','#c04040','#7060c0','#3080c0','#608050','#b05030'];
+const CAT_WH  = ['Nas8','Nas16','Nas50','Ldx8','Ldx16','Ldx30','Relink','Extention','Standing','TV','Router','Rangka'];
+const PAL12   = ['#4e8fd4','#2ebc8a','#e07050','#d46080','#8a8a8a','#80b840','#d09030','#c04040','#7060c0','#3080c0','#608050','#b05030'];
+const ALL_COLS = [...CAT_WH, 'PBWH', 'PBDEP'];
+const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-let data=[];
-let chartMain;
-let isSaving=false;
+let data = [], isSaving = false, charts = {};
 
-// ─── LOCAL STORAGE ────────────────────────────────────────────────────────────
-function saveLocal(){try{localStorage.setItem('wh3_daily',JSON.stringify(data));}catch(e){}}
-function loadLocal(){return JSON.parse(localStorage.getItem('wh3_daily')||'null');}
+function saveLocal(){ try{ localStorage.setItem('wh_daily_v2', JSON.stringify(data)); }catch(e){} }
+function loadLocal(){ return JSON.parse(localStorage.getItem('wh_daily_v2') || 'null'); }
 
-// ─── SYNC STATUS ──────────────────────────────────────────────────────────────
-function setSyncStatus(state,msg){
-  const dot=document.getElementById('sync-dot');
-  const msgEl=document.getElementById('sync-msg');
-  dot.className='sync-dot';
-  if(state==='ok')dot.classList.add('dot-green');
-  else if(state==='loading')dot.classList.add('dot-yellow');
-  else dot.classList.add('dot-red');
-  msgEl.textContent=msg;
-}
-function nowStr(){return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
-
-// ─── FETCH FROM GSHEET ────────────────────────────────────────────────────────
-async function syncFromSheet(){
-  setSyncStatus('loading','Mengambil data dari Google Sheets…');
-  document.getElementById('btn-sync').disabled=true;
-  try{
-    const res=await fetch(GAS_URL+'?action=read',{method:'GET'});
-    const json=await res.json();
-    if(json.status==='ok'&&Array.isArray(json.data)){
-      if(json.data.length>0){
-        data=json.data;
-        saveLocal();
-        setSyncStatus('ok','Tersinkron dengan Google Sheets · '+nowStr());
-      } else {
-        const local=loadLocal();
-        if(local&&local.length)data=local;
-        setSyncStatus('ok','Sheet kosong · pakai data lokal · '+nowStr());
-      }
-    } else throw new Error(json.message||'Respons tidak dikenal');
-  }catch(e){
-    const local=loadLocal();
-    if(local&&local.length){
-      data=local;
-      setSyncStatus('red','⚠ Gagal konek GSheet · pakai cache lokal ('+e.message+')');
-    } else {
-      setSyncStatus('red','⚠ Gagal konek GSheet · tidak ada cache ('+e.message+')');
-    }
-  }
-  document.getElementById('btn-sync').disabled=false;
-  render();
-}
-
-// ─── SAVE TO GSHEET ───────────────────────────────────────────────────────────
-async function saveToSheet(row){
-  const res=await fetch(GAS_URL,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'write',row})
+(function buildForm(){
+  document.getElementById('inp-date').value = new Date().toISOString().slice(0,10);
+  const grid = document.getElementById('grid-wh');
+  CAT_WH.forEach(col => {
+    const g = document.createElement('div'); g.className = 'fg';
+    g.innerHTML = `<label>${col}</label><input type="number" id="inp-${col}" min="0" value="0">`;
+    grid.appendChild(g);
   });
-  const json=await res.json();
-  if(json.status!=='ok')throw new Error(json.message||'Gagal simpan');
+})();
+
+function setSyncStatus(state, msg){
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot';
+  dot.classList.add(state==='ok'?'dot-green':state==='loading'?'dot-yellow':'dot-red');
+  document.getElementById('sync-msg').textContent = msg;
 }
+function nowStr(){ return new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); }
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
-function fmt(d){
-  const[y,m,day]=d.split('-');
-  const mo=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  return`${parseInt(day)} ${mo[parseInt(m)-1]}\n${y}`;
-}
-
-document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
-
-// ─── BUILD FORM ───────────────────────────────────────────────────────────────
-COLS.forEach(col=>{
-  const g=document.createElement('div');
-  g.className='fg';
-  g.innerHTML=`<label>${col}</label><input type="number" id="inp-${col}" min="0" value="0">`;
-  document.getElementById('cols-grid').appendChild(g);
-});
-
-// ─── SUBMIT FORM ──────────────────────────────────────────────────────────────
-async function submitForm(){
-  if(isSaving)return;
-  const date=document.getElementById('inp-date').value;
-  if(!date){showMsg('Pilih tanggal!','#c04040');return;}
-  const row={date};
-  COLS.forEach(c=>{row[c]=parseInt(document.getElementById('inp-'+c).value)||0;});
-
-  isSaving=true;
-  const btn=document.getElementById('btn-submit');
-  btn.disabled=true;
-  btn.textContent='Menyimpan…';
-  showMsg('Mengirim ke Google Sheets…','#888');
-
-  // Update local dulu
-  const idx=data.findIndex(r=>r.date===date);
-  if(idx>=0)data[idx]=row;else data.push(row);
-  data.sort((a,b)=>a.date.localeCompare(b.date));
-  saveLocal();
+async function syncFromSheet(){
+  setSyncStatus('loading','Fetching data from Google Sheets…');
+  document.getElementById('btn-sync').disabled = true;
+  try {
+    const res  = await fetch(GAS_URL + '?action=getAll');
+    const json = await res.json();
+    if(json.status==='ok' && Array.isArray(json.data)){
+      if(json.data.length > 0){ data = json.data; saveLocal(); }
+      else { const l = loadLocal(); if(l && l.length) data = l; }
+      setSyncStatus('ok','Synced · '+nowStr());
+    } else throw new Error(json.message||'Error');
+  } catch(e){
+    const l = loadLocal(); if(l && l.length) data = l;
+    setSyncStatus('red','⚠ Connection failed — showing local data');
+  }
+  document.getElementById('btn-sync').disabled = false;
   render();
+}
 
-  // Kirim ke GSheet
-  try{
+async function saveToSheet(row){
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify({action:'save', row})
+  });
+  const json = await res.json();
+  if(json.status !== 'ok') throw new Error(json.message||'Save failed');
+}
+
+async function submitForm(){
+  if(isSaving) return;
+  const date = document.getElementById('inp-date').value;
+  if(!date){ showMsg('Please select a date!','#c04040'); return; }
+  const row = {date};
+  CAT_WH.forEach(c => { row[c] = parseInt(document.getElementById('inp-'+c).value)||0; });
+  row['PBWH']  = parseInt(document.getElementById('inp-PBWH').value)||0;
+  row['PBDEP'] = parseInt(document.getElementById('inp-PBDEP').value)||0;
+
+  isSaving = true;
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  showMsg('Sending to Google Sheets…','#888');
+
+  const idx = data.findIndex(r => r.date === date);
+  if(idx >= 0) data[idx] = row; else data.push(row);
+  data.sort((a,b) => a.date.localeCompare(b.date));
+  saveLocal(); render();
+
+  try {
     await saveToSheet(row);
-    setSyncStatus('ok','Tersinkron dengan Google Sheets · '+nowStr());
-    showMsg('✓ Tersimpan ke Google Sheets!','#2ebc8a');
-  }catch(e){
-    setSyncStatus('red','⚠ Simpan lokal OK · GSheet gagal: '+e.message);
-    showMsg('⚠ Lokal OK, GSheet gagal: '+e.message,'#d09030');
+    setSyncStatus('ok','Synced · '+nowStr());
+    showMsg('✓ Saved to Google Sheets!','#2ebc8a');
+  } catch(e){
+    setSyncStatus('red','⚠ Local OK · GSheet failed ('+e.message+')');
+    showMsg('⚠ Saved locally, GSheet failed','#d09030');
   }
 
-  COLS.forEach(c=>{document.getElementById('inp-'+c).value=0;});
-  btn.disabled=false;
-  btn.textContent='💾 Simpan data';
-  isSaving=false;
+  ALL_COLS.forEach(c => { const el=document.getElementById('inp-'+c); if(el) el.value=0; });
+  btn.disabled = false; btn.textContent = '💾 Save Data';
+  isSaving = false;
 }
 
 function showMsg(t,c){
-  const el=document.getElementById('form-msg');
-  el.textContent=t;el.style.color=c;
-  if(c==='#2ebc8a')setTimeout(()=>el.textContent='',2500);
+  const el = document.getElementById('form-msg');
+  el.textContent = t; el.style.color = c;
+  if(c === '#2ebc8a') setTimeout(()=>el.textContent='', 2500);
 }
 
-// ─── RENDER ───────────────────────────────────────────────────────────────────
+function sumCols(r,cols){ return cols.reduce((s,c)=>s+(Number(r[c])||0),0); }
+function fmt(d){
+  if(!d||!d.includes('-')) return d||'';
+  const[y,m,day]=d.split('-');
+  return `${parseInt(day)} ${MONTHS_S[parseInt(m)-1]} ${y}`;
+}
+function monthKey(d){ return d?d.slice(0,7):''; }
+function monthLabel(ym){
+  const[y,m]=ym.split('-');
+  return `${MONTHS[parseInt(m)-1]} ${y}`;
+}
+
 function render(){
-  const total=data.reduce((s,r)=>s+COLS.reduce((a,c)=>a+(r[c]||0),0),0);
-  document.getElementById('m-total').textContent=total.toLocaleString();
-  document.getElementById('m-days').textContent=data.length;
-  document.getElementById('m-avg').textContent=data.length?Math.round(total/data.length).toLocaleString():'—';
+  const todayKey = new Date().toISOString().slice(0,10);
+  const [ty,tm,td] = todayKey.split('-');
+  document.getElementById('today-section-date').textContent = `${parseInt(td)} ${MONTHS_S[parseInt(tm)-1]} ${ty}`;
+  const todayRow = data.find(r => r.date === todayKey);
+  document.getElementById('m-wh').textContent    = todayRow ? sumCols(todayRow, CAT_WH).toLocaleString() : '—';
+  document.getElementById('m-pbwh').textContent  = todayRow ? (Number(todayRow['PBWH'])||0).toLocaleString() : '—';
+  document.getElementById('m-pbdep').textContent = todayRow ? (Number(todayRow['PBDEP'])||0).toLocaleString() : '—';
+  document.getElementById('m-days').textContent  = data.length;
+  updateFilterDropdown();
   renderTable();
-  if(document.getElementById('view-grafik').style.display!=='none')renderChart();
+  const active = document.querySelector('.tab.on');
+  if(active && active.textContent.trim()==='Charts'){ renderChartsMesin(); renderChartsPB(); }
+}
+
+function updateFilterDropdown(){
+  const sel = document.getElementById('filter-month');
+  const cur = sel.value;
+  const months = [...new Set(data.map(r=>monthKey(r.date)).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All months</option>' + months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+  if(months.includes(cur)) sel.value = cur;
+}
+
+function filteredData(){
+  const m = document.getElementById('filter-month').value;
+  return m ? data.filter(r=>monthKey(r.date)===m) : data;
 }
 
 function renderTable(){
-  const thead=document.querySelector('#data-table thead');
-  const tbody=document.querySelector('#data-table tbody');
-  thead.innerHTML='<tr><th>Tanggal</th>'+COLS.map(c=>`<th>${c}</th>`).join('')+'<th>Total</th></tr>';
-  if(!data.length){tbody.innerHTML='<tr><td colspan="14" class="empty">Belum ada data. Isi form untuk memulai.</td></tr>';return;}
-  tbody.innerHTML=data.map(r=>{
-    const tot=COLS.reduce((s,c)=>s+(r[c]||0),0);
-    return`<tr><td>${fmt(r.date)}</td>${COLS.map(c=>`<td>${r[c]||0}</td>`).join('')}<td style="font-weight:700;color:#fff">${tot}</td></tr>`;
+  const fd = filteredData();
+  const thead = document.querySelector('#data-table thead');
+  const tbody = document.querySelector('#data-table tbody');
+  document.getElementById('filter-count').textContent = fd.length + ' rows shown';
+  thead.innerHTML = '<tr><th>Date</th>'+CAT_WH.map(l=>`<th>${l}</th>`).join('')+'<th>Total Machine</th><th>PB WH</th><th>PB Deploy</th></tr>';
+  if(!fd.length){ tbody.innerHTML='<tr><td colspan="16" class="empty">No data available.</td></tr>'; return; }
+  tbody.innerHTML = fd.map(r => {
+    const tot = sumCols(r, CAT_WH);
+    return `<tr><td>${fmt(r.date)}</td>${CAT_WH.map(c=>`<td>${Number(r[c])||0}</td>`).join('')}<td style="font-weight:700;color:#fff">${tot}</td><td style="color:#f0a030">${Number(r['PBWH'])||0}</td><td style="color:#e06010">${Number(r['PBDEP'])||0}</td></tr>`;
   }).join('');
 }
 
-function renderChart(){
-  const labels=data.map(r=>fmt(r.date));
-  const datasets=COLS.map((col,i)=>({
-    label:col,
-    data:data.map(r=>r[col]||0),
-    backgroundColor:PAL[i]+'cc',
-    borderColor:PAL[i],
-    borderWidth:1
-  }));
-  document.getElementById('chart-legend').innerHTML=COLS.map((c,i)=>
-    `<span class="legend-item"><span class="dot" style="background:${PAL[i]}"></span>${c}</span>`
-  ).join('');
-  if(chartMain)chartMain.destroy();
-  chartMain=new Chart(document.getElementById('chart-main'),{
-    type:'bar',
-    data:{labels,datasets},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{stacked:true,ticks:{color:'#888',font:{size:10}},grid:{color:'#2a2a2a'}},
-        y:{stacked:true,ticks:{color:'#888',font:{size:10}},grid:{color:'#2a2a2a'}}
-      }
-    }
-  });
+function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
+function mkChart(key,id,type,labels,datasets,opts){ destroyChart(key); charts[key]=new Chart(document.getElementById(id),{type,data:{labels,datasets},options:opts}); }
+function barOpts(){ return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{color:'#888',font:{size:9}},grid:{color:'#2a2a2a'}},y:{stacked:true,ticks:{color:'#888',font:{size:9}},grid:{color:'#2a2a2a'}}}}; }
+function lineOpts(showLeg){ return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:!!showLeg,labels:{color:'#aaa',font:{size:10},boxWidth:10}}},scales:{x:{ticks:{color:'#888',font:{size:9}},grid:{color:'#2a2a2a'}},y:{ticks:{color:'#888',font:{size:9}},grid:{color:'#2a2a2a'}}}}; }
+function makeLegend(elId,labels,pal){ document.getElementById(elId).innerHTML=labels.map((l,i)=>`<span class="legend-item"><span class="dot" style="background:${pal[i%pal.length]}"></span>${l}</span>`).join(''); }
+function makeBarDS(cols,labels,pal){ return cols.map((col,i)=>({label:labels[i],data:data.map(r=>Number(r[col])||0),backgroundColor:pal[i%pal.length]+'cc',borderColor:pal[i%pal.length],borderWidth:1})); }
+function makeLineDS(col,label,color){ return {label,data:data.map(r=>Number(r[col])||0),borderColor:color,backgroundColor:color+'30',fill:true,tension:0.3,pointRadius:3,pointBackgroundColor:color}; }
+function makeLineDSCols(cols,label,color){ return {label,data:data.map(r=>sumCols(r,cols)),borderColor:color,backgroundColor:color+'30',fill:true,tension:0.3,pointRadius:3,pointBackgroundColor:color}; }
+
+function renderChartsMesin(){
+  if(!data.length) return;
+  const labels = data.map(r=>fmt(r.date));
+  makeLegend('leg-wh-bar', CAT_WH, PAL12);
+  mkChart('wh-bar','chart-wh-bar','bar',labels,makeBarDS(CAT_WH,CAT_WH,PAL12),barOpts());
+  mkChart('wh-line','chart-wh-line','line',labels,[makeLineDSCols(CAT_WH,'Total Machine','#4e8fd4')],lineOpts(false));
+}
+
+function renderChartsPB(){
+  if(!data.length) return;
+  const labels = data.map(r=>fmt(r.date));
+  mkChart('pbwh-bar','chart-pbwh-bar','bar',labels,[{label:'PB WH',data:data.map(r=>Number(r['PBWH'])||0),backgroundColor:'#f0a030cc',borderColor:'#f0a030',borderWidth:1}],barOpts());
+  mkChart('pbdep-bar','chart-pbdep-bar','bar',labels,[{label:'PB Deploy',data:data.map(r=>Number(r['PBDEP'])||0),backgroundColor:'#e06010cc',borderColor:'#e06010',borderWidth:1}],barOpts());
+  mkChart('pb-line','chart-pb-line','line',labels,[makeLineDS('PBWH','PB WH Stock','#f0a030'),makeLineDS('PBDEP','PB Deploy Stock','#e06010')],lineOpts(true));
 }
 
 function switchTab(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
-  document.getElementById('view-tabel').style.display=tab==='tabel'?'':'none';
-  document.getElementById('view-grafik').style.display=tab==='grafik'?'':'none';
-  if(tab==='grafik')renderChart();
+  document.getElementById('view-table').style.display = tab==='table'?'':'none';
+  document.getElementById('view-chart').style.display = tab==='chart'?'':'none';
+  if(tab==='chart'){ renderChartsMesin(); renderChartsPB(); }
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
 syncFromSheet();
 </script>
+</body>
+</html>
