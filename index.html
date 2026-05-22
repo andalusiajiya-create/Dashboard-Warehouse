@@ -160,8 +160,15 @@ let data = [], isSaving = false, charts = {};
 function saveLocal(){ try{ localStorage.setItem('wh_daily_v2', JSON.stringify(data)); }catch(e){} }
 function loadLocal(){ return JSON.parse(localStorage.getItem('wh_daily_v2') || 'null'); }
 
+// Selalu pakai waktu Jakarta (UTC+7)
+function todayJKT(){
+  const now = new Date();
+  const jkt = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+  return jkt.toISOString().slice(0,10);
+}
+
 (function buildForm(){
-  document.getElementById('inp-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('inp-date').value = todayJKT();
   const grid = document.getElementById('grid-wh');
   CAT_MACHINE.forEach(col => {
     const g = document.createElement('div'); g.className = 'fg';
@@ -267,7 +274,7 @@ function monthLabel(ym){
 }
 
 function render(){
-  const todayKey = new Date().toISOString().slice(0,10);
+  const todayKey = todayJKT();
   const [ty,tm,td] = todayKey.split('-');
   document.getElementById('today-section-date').textContent = `${parseInt(td)} ${MONTHS_S[parseInt(tm)-1]} ${ty}`;
   const todayRow = data.find(r => r.date === todayKey);
