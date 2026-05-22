@@ -236,9 +236,9 @@ async function submitForm(){
   btn.disabled = true; btn.textContent = 'Saving…';
   showMsg('Sending to Google Sheets…','#888');
 
-  const idx = data.findIndex(r => r.date === date);
+  const idx = data.findIndex(r => parseDate(r.date) === date);
   if(idx >= 0) data[idx] = row; else data.push(row);
-  data.sort((a,b) => a.date.localeCompare(b.date));
+  data.sort((a,b) => parseDate(a.date).localeCompare(parseDate(b.date)));
   saveLocal(); render();
 
   try {
@@ -262,12 +262,26 @@ function showMsg(t,c){
 }
 
 function sumCols(r,cols){ return cols.reduce((s,c)=>s+(Number(r[c])||0),0); }
+
+// Normalize tanggal dari GSheet (bisa ISO string atau plain YYYY-MM-DD) ke YYYY-MM-DD Jakarta
+function parseDate(d){
+  if(!d) return '';
+  if(typeof d === 'string' && d.includes('T')){
+    // Format ISO dari GSheet: 2026-05-21T17:00:00.000Z → konversi ke Jakarta UTC+7
+    const jkt = new Date(new Date(d).getTime() + 7*60*60*1000);
+    return jkt.toISOString().slice(0,10);
+  }
+  // Sudah YYYY-MM-DD
+  return String(d).slice(0,10);
+}
+
 function fmt(d){
-  if(!d||!d.includes('-')) return d||'';
-  const[y,m,day]=d.split('-');
+  const clean = parseDate(d);
+  if(!clean||!clean.includes('-')) return clean||'';
+  const[y,m,day]=clean.split('-');
   return `${parseInt(day)} ${MONTHS_S[parseInt(m)-1]} ${y}`;
 }
-function monthKey(d){ return d?d.slice(0,7):''; }
+function monthKey(d){ return parseDate(d).slice(0,7); }
 function monthLabel(ym){
   const[y,m]=ym.split('-');
   return `${MONTHS[parseInt(m)-1]} ${y}`;
@@ -277,7 +291,7 @@ function render(){
   const todayKey = todayJKT();
   const [ty,tm,td] = todayKey.split('-');
   document.getElementById('today-section-date').textContent = `${parseInt(td)} ${MONTHS_S[parseInt(tm)-1]} ${ty}`;
-  const todayRow = data.find(r => r.date === todayKey);
+  const todayRow = data.find(r => parseDate(r.date) === todayKey);
   document.getElementById('m-wh').textContent    = todayRow ? sumCols(todayRow, CAT_WH).toLocaleString() : '—';
   document.getElementById('m-pbwh').textContent  = todayRow ? (Number(todayRow['PBWH'])||0).toLocaleString() : '—';
   document.getElementById('m-pbdep').textContent = todayRow ? (Number(todayRow['PBDEP'])||0).toLocaleString() : '—';
