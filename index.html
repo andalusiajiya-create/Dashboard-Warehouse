@@ -93,6 +93,7 @@ tr:hover td{background:#2c2c2c}
     <div class="mc"><div class="mc-label">Machine (Today)</div><div class="mc-val" id="m-wh">—</div></div>
     <div class="mc"><div class="mc-label">PB Warehouse (Today)</div><div class="mc-val" id="m-pbwh">—</div></div>
     <div class="mc"><div class="mc-label">PB Deploy (Today)</div><div class="mc-val" id="m-pbdep">—</div></div>
+    <div class="mc"><div class="mc-label">PB Relink (Today)</div><div class="mc-val" id="m-pbrelink">—</div></div>
     <div class="mc"><div class="mc-label">Days Recorded</div><div class="mc-val" id="m-days">0</div></div>
   </div>
 
@@ -112,6 +113,9 @@ tr:hover td{background:#2c2c2c}
 
       <div class="cat-title">🔋 Powerbank Deploy Stock</div>
       <div class="fg"><label>Quantity</label><input type="number" id="inp-PBDEP" min="0" placeholder="0"></div>
+
+      <div class="cat-title">🔋 Powerbank Relink Stock</div>
+      <div class="fg"><label>Quantity</label><input type="number" id="inp-PBRELINK" min="0" placeholder="0"></div>
 
       <hr class="divider">
       <button class="save-btn" onclick="submitForm()" id="btn-submit">Save Data</button>
@@ -157,7 +161,7 @@ const CAT_MACHINE = ['Nas8','Nas8Powernow','Nas16','Nas50','Ldx8','Ldx16','Ldx30
 const CAT_OTHER   = ['Standing','TV','Router','Rangka'];
 const CAT_WH      = [...CAT_MACHINE, ...CAT_OTHER];
 const PAL12   = ['#4e8fd4','#5bc4f5','#2ebc8a','#e07050','#d46080','#8a8a8a','#80b840','#d09030','#c04040','#7060c0','#3080c0','#608050','#b05030'];
-const ALL_COLS = [...CAT_WH, 'PBWH', 'PBDEP'];
+const ALL_COLS = [...CAT_WH, 'PBWH', 'PBDEP', 'PBRELINK'];
 const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -239,6 +243,7 @@ async function submitForm(){
   CAT_WH.forEach(c => { row[c] = parseInt(document.getElementById('inp-'+c).value)||0; });
   row['PBWH']  = parseInt(document.getElementById('inp-PBWH').value)||0;
   row['PBDEP'] = parseInt(document.getElementById('inp-PBDEP').value)||0;
+  row['PBRELINK'] = parseInt(document.getElementById('inp-PBRELINK').value)||0;
 
   isSaving = true;
   const btn = document.getElementById('btn-submit');
@@ -304,6 +309,7 @@ function render(){
   document.getElementById('m-wh').textContent    = todayRow ? sumCols(todayRow, CAT_WH).toLocaleString() : '—';
   document.getElementById('m-pbwh').textContent  = todayRow ? (Number(todayRow['PBWH'])||0).toLocaleString() : '—';
   document.getElementById('m-pbdep').textContent = todayRow ? (Number(todayRow['PBDEP'])||0).toLocaleString() : '—';
+  document.getElementById('m-pbrelink').textContent = todayRow ? (Number(todayRow['PBRELINK'])||0).toLocaleString() : '—';
   document.getElementById('m-days').textContent  = data.length;
   updateFilterDropdown();
   renderTable();
@@ -337,15 +343,16 @@ function renderTable(){
       <th rowspan="2" style="vertical-align:bottom">Total Machine</th>
       <th rowspan="2" style="vertical-align:bottom">PB WH</th>
       <th rowspan="2" style="vertical-align:bottom">PB Deploy</th>
+      <th rowspan="2" style="vertical-align:bottom">PB Relink</th>
     </tr>
     <tr>
       ${CAT_MACHINE.map(l=>`<th>${colLabel(l)}</th>`).join('')}
       ${CAT_OTHER.map(l=>`<th>${colLabel(l)}</th>`).join('')}
     </tr>`;
-  if(!fd.length){ tbody.innerHTML=`<tr><td colspan="${CAT_WH.length+4}" class="empty">No data available.</td></tr>`; return; }
+  if(!fd.length){ tbody.innerHTML=`<tr><td colspan="${CAT_WH.length+5}" class="empty">No data available.</td></tr>`; return; }
   tbody.innerHTML = fd.map(r => {
     const tot = sumCols(r, CAT_WH);
-    return `<tr><td>${fmt(r.date)}</td>${CAT_WH.map(c=>`<td>${Number(r[c])||0}</td>`).join('')}<td style="font-weight:700;color:#fff">${tot}</td><td style="color:#f0a030">${Number(r['PBWH'])||0}</td><td style="color:#e06010">${Number(r['PBDEP'])||0}</td></tr>`;
+    return `<tr><td>${fmt(r.date)}</td>${CAT_WH.map(c=>`<td>${Number(r[c])||0}</td>`).join('')}<td style="font-weight:700;color:#fff">${tot}</td><td style="color:#f0a030">${Number(r['PBWH'])||0}</td><td style="color:#e06010">${Number(r['PBDEP'])||0}</td><td style="color:#7fd9ff">${Number(r['PBRELINK'])||0}</td></tr>`;
   }).join('');
 }
 
@@ -376,7 +383,7 @@ function renderIndividualCharts(){
 
   buildChartGrid('chart-grid-machine', CAT_MACHINE, PAL12);
   buildChartGrid('chart-grid-other', CAT_OTHER, PAL12.slice(8));
-  buildChartGrid('chart-grid-pb', ['PBWH','PBDEP'], ['#f0a030','#e06010']);
+  buildChartGrid('chart-grid-pb', ['PBWH','PBDEP','PBRELINK'], ['#f0a030','#e06010','#7fd9ff']);
 
   CAT_MACHINE.forEach((col,i) => {
     const color = PAL12[i % PAL12.length];
@@ -396,7 +403,7 @@ function renderIndividualCharts(){
     });
   });
 
-  [['PBWH','#f0a030'],['PBDEP','#e06010']].forEach(([col,color]) => {
+  [['PBWH','#f0a030'],['PBDEP','#e06010'],['PBRELINK','#7fd9ff']].forEach(([col,color]) => {
     destroyChart('ind-'+col);
     charts['ind-'+col] = new Chart(document.getElementById('chart-ind-'+col), {
       type:'line', data:{labels, datasets:[{data:data.map(r=>Number(r[col])||0), borderColor:color, backgroundColor:color+'25', fill:true, tension:0.3, pointRadius:2, pointBackgroundColor:color, borderWidth:2}]},
@@ -446,6 +453,7 @@ function copyBroadcast(){
   lines.push(`🔋 *Powerbank*`);
   lines.push(`• ${pad('PB WH', 10)}: ${Number(todayRow['PBWH'])||0}`);
   lines.push(`• ${pad('PB Deploy', 10)}: ${Number(todayRow['PBDEP'])||0}`);
+  lines.push(`• ${pad('PB Relink', 10)}: ${Number(todayRow['PBRELINK'])||0}`);
 
   const text = lines.join('\n');
   navigator.clipboard.writeText(text).then(() => {
