@@ -118,7 +118,7 @@ tr:hover td{background:#2c2c2c}
       <div class="fg"><label>Quantity</label><input type="number" id="inp-PBRELINK" min="0" placeholder="0"></div>
 
       <hr class="divider">
-      <button class="save-btn" onclick="submitForm()" id="btn-submit">Save Data</button>
+      <button class="save-btn" onclick="submitForm()" id="btn-submit">💾 Save Data</button>
       <p class="msg" id="form-msg"></p>
     </div>
 
@@ -165,10 +165,12 @@ const ALL_COLS = [...CAT_WH, 'PBWH', 'PBDEP', 'PBRELINK'];
 const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+const WA_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+
 let data = [], isSaving = false, charts = {};
 
 function saveLocal(){ try{ localStorage.setItem('wh_daily_v2', JSON.stringify(data)); }catch(e){} }
-function loadLocal(){ return JSON.parse(localStorage.getItem('wh_daily_v2') || 'null'); }
+function loadLocal(){ try{ return JSON.parse(localStorage.getItem('wh_daily_v2') || 'null'); }catch(e){ return null; } }
 
 // Selalu pakai waktu Jakarta (UTC+7)
 function todayJKT(){
@@ -211,7 +213,7 @@ async function syncFromSheet(){
     const res  = await fetch(GAS_URL + '?action=getAll');
     const json = await res.json();
     if(json.status==='ok' && Array.isArray(json.data)){
-      // FIX: Selalu pakai data dari GSheet, termasuk kalau kosong
+      // Selalu pakai data dari GSheet, termasuk kalau kosong
       data = json.data;
       saveLocal();
       setSyncStatus('ok','Synced · '+nowStr());
@@ -239,19 +241,33 @@ async function submitForm(){
   if(isSaving) return;
   const date = document.getElementById('inp-date').value;
   if(!date){ showMsg('Please select a date!','#c04040'); return; }
+
+  // Kirim HANYA field yang diisi. Field kosong = jangan ubah nilai yang sudah ada.
+  // Kalau memang mau isi 0, ketik 0 secara eksplisit.
   const row = {date};
-  CAT_WH.forEach(c => { row[c] = parseInt(document.getElementById('inp-'+c).value)||0; });
-  row['PBWH']  = parseInt(document.getElementById('inp-PBWH').value)||0;
-  row['PBDEP'] = parseInt(document.getElementById('inp-PBDEP').value)||0;
-  row['PBRELINK'] = parseInt(document.getElementById('inp-PBRELINK').value)||0;
+  ALL_COLS.forEach(c => {
+    const v = document.getElementById('inp-'+c).value;
+    if(v !== '') row[c] = parseInt(v) || 0;
+  });
+  if(Object.keys(row).length === 1){
+    showMsg('Isi minimal satu field!','#c04040');
+    return;
+  }
 
   isSaving = true;
   const btn = document.getElementById('btn-submit');
   btn.disabled = true; btn.textContent = 'Saving…';
   showMsg('Sending to Google Sheets…','#888');
 
+  // Update tampilan lokal: gabungkan dengan data lama kalau tanggalnya sudah ada
   const idx = data.findIndex(r => parseDate(r.date) === date);
-  if(idx >= 0) data[idx] = row; else data.push(row);
+  if(idx >= 0){
+    data[idx] = Object.assign({}, data[idx], row);
+  } else {
+    const fresh = {date};
+    ALL_COLS.forEach(c => { fresh[c] = 0; });
+    data.push(Object.assign(fresh, row));
+  }
   data.sort((a,b) => parseDate(a.date).localeCompare(parseDate(b.date)));
   saveLocal(); render();
 
@@ -357,23 +373,25 @@ function renderTable(){
 }
 
 function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
-function mkChart(key,id,type,labels,datasets,opts){ destroyChart(key); charts[key]=new Chart(document.getElementById(id),{type,data:{labels,datasets},options:opts}); }
-function barOpts(){ return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{color:'#888',font:{size:9}},grid:{color:'#2a2a2a'}},y:{stacked:true,ticks:{color:'#888',font:{size:9}},grid:{color:'#2a2a2a'}}}}; }
-function lineOpts(showLeg){ return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:!!showLeg,labels:{color:'#aaa',font:{size:10},boxWidth:10}}},scales:{x:{ticks:{color:'#888',font:{size:9}},grid:{color:'#2a2a2a'}},y:{ticks:{color:'#888',font:{size:9}},grid:{color:'#2a2a2a'}}}}; }
-function makeLegend(elId,labels,pal){ document.getElementById(elId).innerHTML=labels.map((l,i)=>`<span class="legend-item"><span class="dot" style="background:${pal[i%pal.length]}"></span>${l}</span>`).join(''); }
-function makeBarDS(cols,labels,pal){ return cols.map((col,i)=>({label:labels[i],data:data.map(r=>Number(r[col])||0),backgroundColor:pal[i%pal.length]+'cc',borderColor:pal[i%pal.length],borderWidth:1})); }
-function makeLineDS(col,label,color){ return {label,data:data.map(r=>Number(r[col])||0),borderColor:color,backgroundColor:color+'30',fill:true,tension:0.3,pointRadius:3,pointBackgroundColor:color}; }
-function makeLineDSCols(cols,label,color){ return {label,data:data.map(r=>sumCols(r,cols)),borderColor:color,backgroundColor:color+'30',fill:true,tension:0.3,pointRadius:3,pointBackgroundColor:color}; }
 
 function singleLineOpts(color){ return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}`}}},scales:{x:{ticks:{color:'#666',font:{size:8},maxRotation:45},grid:{color:'#222'}},y:{ticks:{color:'#666',font:{size:8}},grid:{color:'#222'},beginAtZero:true}}}; }
 
-function buildChartGrid(gridId, cols, palette){
+function buildChartGrid(gridId, cols){
   const grid = document.getElementById(gridId);
   grid.innerHTML = '';
-  cols.forEach((col, i) => {
+  cols.forEach(col => {
     const card = document.createElement('div'); card.className = 'chart-card';
     card.innerHTML = `<div class="chart-card-title">${col}</div><div class="chart-card-wrap"><canvas id="chart-ind-${col}"></canvas></div>`;
     grid.appendChild(card);
+  });
+}
+
+function drawLine(col, color, labels){
+  destroyChart('ind-'+col);
+  charts['ind-'+col] = new Chart(document.getElementById('chart-ind-'+col), {
+    type:'line',
+    data:{labels, datasets:[{data:data.map(r=>Number(r[col])||0), borderColor:color, backgroundColor:color+'25', fill:true, tension:0.3, pointRadius:2, pointBackgroundColor:color, borderWidth:2}]},
+    options: singleLineOpts(color)
   });
 }
 
@@ -381,39 +399,14 @@ function renderIndividualCharts(){
   if(!data.length) return;
   const labels = data.map(r=>fmt(r.date));
 
-  buildChartGrid('chart-grid-machine', CAT_MACHINE, PAL12);
-  buildChartGrid('chart-grid-other', CAT_OTHER, PAL12.slice(8));
-  buildChartGrid('chart-grid-pb', ['PBWH','PBDEP','PBRELINK'], ['#f0a030','#e06010','#7fd9ff']);
+  buildChartGrid('chart-grid-machine', CAT_MACHINE);
+  buildChartGrid('chart-grid-other', CAT_OTHER);
+  buildChartGrid('chart-grid-pb', ['PBWH','PBDEP','PBRELINK']);
 
-  CAT_MACHINE.forEach((col,i) => {
-    const color = PAL12[i % PAL12.length];
-    destroyChart('ind-'+col);
-    charts['ind-'+col] = new Chart(document.getElementById('chart-ind-'+col), {
-      type:'line', data:{labels, datasets:[{data:data.map(r=>Number(r[col])||0), borderColor:color, backgroundColor:color+'25', fill:true, tension:0.3, pointRadius:2, pointBackgroundColor:color, borderWidth:2}]},
-      options: singleLineOpts(color)
-    });
-  });
-
-  CAT_OTHER.forEach((col,i) => {
-    const color = PAL12[(i+8) % PAL12.length];
-    destroyChart('ind-'+col);
-    charts['ind-'+col] = new Chart(document.getElementById('chart-ind-'+col), {
-      type:'line', data:{labels, datasets:[{data:data.map(r=>Number(r[col])||0), borderColor:color, backgroundColor:color+'25', fill:true, tension:0.3, pointRadius:2, pointBackgroundColor:color, borderWidth:2}]},
-      options: singleLineOpts(color)
-    });
-  });
-
-  [['PBWH','#f0a030'],['PBDEP','#e06010'],['PBRELINK','#7fd9ff']].forEach(([col,color]) => {
-    destroyChart('ind-'+col);
-    charts['ind-'+col] = new Chart(document.getElementById('chart-ind-'+col), {
-      type:'line', data:{labels, datasets:[{data:data.map(r=>Number(r[col])||0), borderColor:color, backgroundColor:color+'25', fill:true, tension:0.3, pointRadius:2, pointBackgroundColor:color, borderWidth:2}]},
-      options: singleLineOpts(color)
-    });
-  });
+  CAT_MACHINE.forEach((col,i) => drawLine(col, PAL12[i % PAL12.length], labels));
+  CAT_OTHER.forEach((col,i) => drawLine(col, PAL12[(i+8) % PAL12.length], labels));
+  [['PBWH','#f0a030'],['PBDEP','#e06010'],['PBRELINK','#7fd9ff']].forEach(([col,color]) => drawLine(col, color, labels));
 }
-
-function renderChartsMesin(){ renderIndividualCharts(); }
-function renderChartsPB(){}
 
 function switchTab(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
@@ -421,6 +414,16 @@ function switchTab(tab,el){
   document.getElementById('view-table').style.display = tab==='table'?'':'none';
   document.getElementById('view-chart').style.display = tab==='chart'?'':'none';
   if(tab==='chart'){ renderIndividualCharts(); }
+}
+
+function flashCopied(){
+  const btn = document.getElementById('btn-copy');
+  btn.innerHTML = '✓ Copied!';
+  btn.style.background = '#1a9e50';
+  setTimeout(() => {
+    btn.innerHTML = WA_SVG + ' Copy WA Report';
+    btn.style.background = '#25D366';
+  }, 2000);
 }
 
 function copyBroadcast(){
@@ -456,27 +459,13 @@ function copyBroadcast(){
   lines.push(`• ${pad('PB Relink', 10)}: ${Number(todayRow['PBRELINK'])||0}`);
 
   const text = lines.join('\n');
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('btn-copy');
-    btn.innerHTML = '✓ Copied!';
-    btn.style.background = '#1a9e50';
-    setTimeout(() => {
-      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Copy WA Report`;
-      btn.style.background = '#25D366';
-    }, 2000);
-  }).catch(() => {
+  navigator.clipboard.writeText(text).then(flashCopied).catch(() => {
     const ta = document.createElement('textarea');
     ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
     document.body.appendChild(ta); ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    const btn = document.getElementById('btn-copy');
-    btn.innerHTML = '✓ Copied!';
-    btn.style.background = '#1a9e50';
-    setTimeout(() => {
-      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Copy WA Report`;
-      btn.style.background = '#25D366';
-    }, 2000);
+    flashCopied();
   });
 }
 
